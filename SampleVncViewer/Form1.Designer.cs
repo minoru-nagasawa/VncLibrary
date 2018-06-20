@@ -28,14 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.label1 = new System.Windows.Forms.Label();
             this.c_addressTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.c_passwordTextBox = new System.Windows.Forms.TextBox();
             this.c_vnc33CheckBox = new System.Windows.Forms.CheckBox();
             this.c_connectButton = new System.Windows.Forms.Button();
-            this.c_pictureBox = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.c_pictureBox)).BeginInit();
+            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.SuspendLayout();
             // 
             // label1
@@ -91,24 +91,16 @@
             this.c_connectButton.UseVisualStyleBackColor = true;
             this.c_connectButton.Click += new System.EventHandler(this.c_connectButton_Click);
             // 
-            // c_pictureBox
+            // contextMenuStrip1
             // 
-            this.c_pictureBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.c_pictureBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.c_pictureBox.Location = new System.Drawing.Point(12, 31);
-            this.c_pictureBox.Name = "c_pictureBox";
-            this.c_pictureBox.Size = new System.Drawing.Size(464, 350);
-            this.c_pictureBox.TabIndex = 4;
-            this.c_pictureBox.TabStop = false;
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 26);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(488, 393);
-            this.Controls.Add(this.c_pictureBox);
             this.Controls.Add(this.c_connectButton);
             this.Controls.Add(this.c_vnc33CheckBox);
             this.Controls.Add(this.c_passwordTextBox);
@@ -117,7 +109,7 @@
             this.Controls.Add(this.label1);
             this.Name = "Form1";
             this.Text = "Form1";
-            ((System.ComponentModel.ISupportInitialize)(this.c_pictureBox)).EndInit();
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -131,7 +123,7 @@
         private System.Windows.Forms.TextBox c_passwordTextBox;
         private System.Windows.Forms.CheckBox c_vnc33CheckBox;
         private System.Windows.Forms.Button c_connectButton;
-        private System.Windows.Forms.PictureBox c_pictureBox;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
     }
 }
 

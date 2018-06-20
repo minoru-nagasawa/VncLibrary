@@ -5,7 +5,7 @@ using System.Text;
 
 namespace VncLibrary
 {
-    public interface IVncPixelGetter : IDisposable
+    public interface IVncPixelGetter
     {
         Vec3b GetPixelVec3b(byte[] a_value, int a_offset);
         int   GetPixelByteSize();

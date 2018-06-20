@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,12 +19,13 @@ namespace SampleVncViewer
     {
         private VncClient m_client;
         private bool      m_connectMode;
-        private Image     m_image;
-        private Task      m_vncThread;
 
         public Form1()
         {
             InitializeComponent();
+            c_addressTextBox.Text = Properties.Settings.Default.Address;
+            c_passwordTextBox.Text = Properties.Settings.Default.Password;
+            c_vnc33CheckBox.Checked = Properties.Settings.Default.Use33;
 
             m_connectMode = true;
         }
@@ -47,42 +49,40 @@ namespace SampleVncViewer
                 bool result = await m_client.ConnectVncAsync();
                 if (result)
                 {
-                    m_vncThread = Task.Factory.StartNew(async () =>
+                    c_connectButton.Text = "Disconnect";
+                    m_connectMode = false;
+
+                    using (var window = new OpenCvSharp.Window(m_client.ServerInitBody.NameString))
                     {
-                        while (m_client.Connected)
+                        while (!m_connectMode)
                         {
                             var read = await m_client.ReadServerMessageAsync();
                             var messageType = (VncEnum.MessageTypeServerToClient)read[0];
                             if (messageType == VncEnum.MessageTypeServerToClient.FramebufferUpdate)
                             {
-                                c_pictureBox.Invoke((MethodInvoker)delegate
-                                {
-                                    using (var m = new MemoryStream(m_client.CreateCanvasImage()))
-                                    {
-                                        m_image?.Dispose();
-                                        m_image = Image.FromStream(m);
-                                        c_pictureBox.Image = m_image;
-                                    }
-                                });
-
+                                window.ShowImage(m_client.InternalCanvas);
                                 await m_client.WriteFramebufferUpdateRequestAsync();
                             }
-                            //Thread.Sleep(50);
                         }
-                    });
-
-                    c_connectButton.Text = "Disconnect";
-                    m_connectMode = !m_connectMode;
+                        OpenCvSharp.Window.DestroyAllWindows();
+                        m_client.Dispose();
+                        m_client = null;
+                    }
                 }
             }
             else
             {
-                m_client.Dispose();
-                m_client = null;
-
                 c_connectButton.Text = "Connect";
-                m_connectMode = !m_connectMode;
+                m_connectMode = true;
             }
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Properties.Settings.Default.Address = c_addressTextBox.Text;
+            Properties.Settings.Default.Password = c_passwordTextBox.Text;
+            Properties.Settings.Default.Use33 = c_vnc33CheckBox.Checked;
+            Properties.Settings.Default.Save();
         }
     }
 }

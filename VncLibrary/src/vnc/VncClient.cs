@@ -31,8 +31,6 @@ namespace VncLibrary
                 m_stream?.Dispose();    m_stream    = null;
                 m_tcpClient?.Dispose(); m_tcpClient = null;
                 m_canvas?.Dispose();    m_canvas    = null;
-                m_pixelGetterNormal?.Dispose(); m_pixelGetterNormal = null;
-                m_pixelGetterZrle?.Dispose();   m_pixelGetterZrle   = null;
             }
             m_disposed = true;
         }
@@ -76,6 +74,14 @@ namespace VncLibrary
             get
             {
                 return m_serverInitBody;
+            }
+        }
+
+        public Mat InternalCanvas
+        {
+            get
+            {
+                return m_canvas;
             }
         }
 

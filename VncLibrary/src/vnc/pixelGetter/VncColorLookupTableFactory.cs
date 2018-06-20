@@ -8,9 +8,9 @@ namespace VncLibrary
 {
     static public class VncColorLookupTableFactory
     {
-        static private ConcurrentDictionary<Tuple<int, bool>, MatOfByte3> s_colorMap = new ConcurrentDictionary<Tuple<int, bool>, MatOfByte3>();
+        static private ConcurrentDictionary<Tuple<int, bool>, Vec3b[]> s_colorMap = new ConcurrentDictionary<Tuple<int, bool>, Vec3b[]>();
 
-        static public MatOfByte3 GetColorLookupTable(PixelFormat a_pixelFormat)
+        static public Vec3b[] GetColorLookupTable(PixelFormat a_pixelFormat)
         {
             if (a_pixelFormat.BytesPerPixel != 1
             &&  a_pixelFormat.BytesPerPixel != 2)
@@ -19,10 +19,10 @@ namespace VncLibrary
             }
             if (!a_pixelFormat.TrueColorFlag)
             {
-                return null;
+                return new Vec3b[0];
             }
 
-            MatOfByte3 colorMap;
+            Vec3b[] colorMap;
             var key = new Tuple<int, bool>(a_pixelFormat.BytesPerPixel, a_pixelFormat.BigEndianFlag);
             if (s_colorMap.TryGetValue(key, out colorMap))
             {
@@ -31,17 +31,14 @@ namespace VncLibrary
 
             if (a_pixelFormat.BytesPerPixel == 1)
             {
-                // MatOfByte3 is fast access.
-                // https://github.com/shimat/opencvsharp/wiki/%5BCpp%5D-Accessing-Pixel#typespecificmat-faster
                 int size = 0xFF;
-                colorMap = new MatOfByte3(size + 1, 1);
-                var indexer = colorMap.GetIndexer();
+                colorMap = new Vec3b[size + 1];
                 for (int i = 0; i <= size; ++i)
                 {
                     int r = ((i >> a_pixelFormat.RedShift)   & a_pixelFormat.RedMax  ) * 0xFF / a_pixelFormat.RedMax;
                     int g = ((i >> a_pixelFormat.GreenShift) & a_pixelFormat.GreenMax) * 0xFF / a_pixelFormat.GreenMax;
                     int b = ((i >> a_pixelFormat.BlueShift)  & a_pixelFormat.BlueMax ) * 0xFF / a_pixelFormat.BlueMax;
-                    indexer[i, 0] = new Vec3b((byte)b, (byte)g, (byte)r);
+                    colorMap[i] = new Vec3b((byte)b, (byte)g, (byte)r);
                 }
 
                 s_colorMap.TryAdd(key, colorMap);
@@ -50,10 +47,10 @@ namespace VncLibrary
             else if (a_pixelFormat.BytesPerPixel == 2)
             {
                 int size = 0xFF;
-                colorMap = new MatOfByte3(size + 1, size + 1);
-                var indexer = colorMap.GetIndexer();
+                colorMap = new Vec3b[(size + 1) * (size + 1)];
                 if (a_pixelFormat.BigEndianFlag)
                 {
+                    int index = 0;
                     for (int i = 0; i <= size; ++i)
                     {
                         for (int j = 0; j <= size; ++j)
@@ -62,12 +59,13 @@ namespace VncLibrary
                             int r = ((value >> a_pixelFormat.RedShift)   & a_pixelFormat.RedMax)   * 0xFF / a_pixelFormat.RedMax;
                             int g = ((value >> a_pixelFormat.GreenShift) & a_pixelFormat.GreenMax) * 0xFF / a_pixelFormat.GreenMax;
                             int b = ((value >> a_pixelFormat.BlueShift)  & a_pixelFormat.BlueMax)  * 0xFF / a_pixelFormat.BlueMax;
-                            indexer[i, j] = new Vec3b((byte)b, (byte)g, (byte)r);
+                            colorMap[index++] = new Vec3b((byte)b, (byte)g, (byte)r);
                         }
                     }
                 }
                 else
                 {
+                    int index = 0;
                     for (int i = 0; i <= size; ++i)
                     {
                         for (int j = 0; j <= size; ++j)
@@ -76,7 +74,7 @@ namespace VncLibrary
                             int r = ((value >> a_pixelFormat.RedShift)   & a_pixelFormat.RedMax)   * 0xFF / a_pixelFormat.RedMax;
                             int g = ((value >> a_pixelFormat.GreenShift) & a_pixelFormat.GreenMax) * 0xFF / a_pixelFormat.GreenMax;
                             int b = ((value >> a_pixelFormat.BlueShift)  & a_pixelFormat.BlueMax)  * 0xFF / a_pixelFormat.BlueMax;
-                            indexer[i, j] = new Vec3b((byte)b, (byte)g, (byte)r);
+                            colorMap[index++] = new Vec3b((byte)b, (byte)g, (byte)r);
                         }
                     }
                 }

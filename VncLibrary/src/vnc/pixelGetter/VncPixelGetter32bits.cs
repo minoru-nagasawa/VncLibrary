@@ -7,27 +7,6 @@ namespace VncLibrary
 {
     public class VncPixelGetter32bits : IVncPixelGetter
     {
-        #region for IDisposable
-        bool m_disposed = false;
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        protected virtual void Dispose(bool a_disposing)
-        {
-            if (m_disposed)
-            {
-                return;
-            }
-
-            if (a_disposing)
-            {
-            }
-            m_disposed = true;
-        }
-        #endregion
-
         private PixelFormat m_pixelFormat;
 
         public VncPixelGetter32bits(PixelFormat a_pixelFormat)
