@@ -44,7 +44,7 @@ namespace SampleVncViewer
                                            5900,
                                            c_passwordTextBox.Text,
                                            c_vnc33CheckBox.Checked ? VncEnum.Version.Version33 : VncEnum.Version.None);
-                m_client = new VncClient(config, (s) => new NetworkStream(s));
+                m_client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)));
 
                 bool result = await m_client.ConnectVncAsync();
                 if (result)

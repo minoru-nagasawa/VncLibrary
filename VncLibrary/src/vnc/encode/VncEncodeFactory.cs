@@ -9,7 +9,7 @@ namespace VncLibrary
 {
     public static class VncEncodeFactory
     {
-        public static async Task<List<VncEncodeAbstract>> CreateVncEncodeFromStream(NetworkStream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static async Task<List<VncEncodeAbstract>> CreateVncEncodeFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             var vncEncodeList = new List<VncEncodeAbstract>();
 
@@ -28,7 +28,7 @@ namespace VncLibrary
             return vncEncodeList;
         }
 
-        private static async Task<VncEncodeAbstract> createVncEncodeFromStreamSub(NetworkStream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static async Task<VncEncodeAbstract> createVncEncodeFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             byte[] header = new byte[12];
             await a_stream.ReadAllAsync(header, 0, header.Length);
@@ -344,7 +344,7 @@ namespace VncLibrary
             }
         }
 
-        public static async Task<List<byte[]>> CreateVncEncodeBinaryFromStream(NetworkStream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static async Task<List<byte[]>> CreateVncEncodeBinaryFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             var readDataList = new List<byte[]>();
 
@@ -365,7 +365,7 @@ namespace VncLibrary
             return readDataList;
         }
 
-        private static async Task<List<byte[]>> createVncEncodeBinaryFromStreamSub(NetworkStream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static async Task<List<byte[]>> createVncEncodeBinaryFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             // Add the read data to this list.
             var readDataList = new List<byte[]>();

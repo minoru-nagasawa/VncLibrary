@@ -109,9 +109,9 @@ namespace VncLibrary
             DisconnectedEvent?.Invoke(this, a_args);
         }
 
-        private Func<Socket, NetworkStream> m_streamCreator;
-        private TcpClient           m_tcpClient;
-        private NetworkStream       m_stream;
+        private Func<Socket, Stream> m_streamCreator;
+        private TcpClient            m_tcpClient;
+        private Stream               m_stream;
 
         private VncServerInitBody   m_serverInitBody;
         private bool                m_readingServerMessage;
@@ -128,9 +128,9 @@ namespace VncLibrary
         /// <param name="a_streamCreator"></param>
         /// <example>
         /// var config = new VncConfig("192.168.1.1", 5900, "password", true);
-        /// var client = new VncClient(config, (s) => new NetworkStream(s));
+        /// var client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)));
         /// </example>
-        public VncClient(VncConfig a_clientConfig, Func<Socket, NetworkStream> a_streamCreator)
+        public VncClient(VncConfig a_clientConfig, Func<Socket, Stream> a_streamCreator)
         {
             ClientConfig    = a_clientConfig;
             m_streamCreator = a_streamCreator;
