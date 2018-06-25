@@ -44,7 +44,7 @@ namespace SampleVncViewer
                                            5900,
                                            c_passwordTextBox.Text,
                                            c_vnc33CheckBox.Checked ? VncEnum.Version.Version33 : VncEnum.Version.None);
-                m_client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)));
+                m_client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)), (s) => new NetworkStream(s));
 
                 bool result = await m_client.ConnectVncAsync();
                 if (result)
@@ -54,6 +54,35 @@ namespace SampleVncViewer
 
                     using (var window = new OpenCvSharp.Window(m_client.ServerInitBody.NameString))
                     {
+                        window.OnMouseCallback += async (ev, x, y, flags) =>
+                        {
+                            VncEnum.PointerEventButtonMask mask = VncEnum.PointerEventButtonMask.None;
+                            if ((flags & OpenCvSharp.MouseEvent.FlagLButton) != 0)
+                            {
+                                mask |= VncEnum.PointerEventButtonMask.MouseButtonLeft;
+                            }
+                            if ((flags & OpenCvSharp.MouseEvent.FlagMButton) != 0)
+                            {
+                                mask |= VncEnum.PointerEventButtonMask.MouseButtonMiddle;
+                            }
+                            if ((flags & OpenCvSharp.MouseEvent.FlagRButton) != 0)
+                            {
+                                mask |= VncEnum.PointerEventButtonMask.MouseButtonRight;
+                            }
+                            if ((ev & OpenCvSharp.MouseEvent.MouseWheel) != 0)
+                            {
+                                if (flags > 0)
+                                {
+                                    mask |= VncEnum.PointerEventButtonMask.MouseWheelUp;
+                                }
+                                else
+                                {
+                                    mask |= VncEnum.PointerEventButtonMask.MouseWheelDown;
+                                }
+                            }
+                            await m_client.WritePointerEventAsync(mask, (UInt16)x, (UInt16)y);
+                        };
+
                         while (!m_connectMode)
                         {
                             var read = await m_client.ReadServerMessageAsync();

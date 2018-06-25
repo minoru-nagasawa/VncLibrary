@@ -28,9 +28,10 @@ namespace VncLibrary
 
             if (a_disposing)
             {
-                m_stream?.Dispose();    m_stream    = null;
-                m_tcpClient?.Dispose(); m_tcpClient = null;
-                m_canvas?.Dispose();    m_canvas    = null;
+                m_readStream?.Dispose();  m_readStream  = null;
+                m_writeStream?.Dispose(); m_writeStream = null;
+                m_tcpClient?.Dispose();   m_tcpClient   = null;
+                m_canvas?.Dispose();      m_canvas      = null;
             }
             m_disposed = true;
         }
@@ -109,9 +110,11 @@ namespace VncLibrary
             DisconnectedEvent?.Invoke(this, a_args);
         }
 
-        private Func<Socket, Stream> m_streamCreator;
+        private Func<Socket, Stream> m_readStreamCreator;
+        private Func<Socket, Stream> m_writeStreamCreator;
         private TcpClient            m_tcpClient;
-        private Stream               m_stream;
+        private Stream               m_readStream;
+        private Stream               m_writeStream;
 
         private VncServerInitBody   m_serverInitBody;
         private bool                m_readingServerMessage;
@@ -128,19 +131,21 @@ namespace VncLibrary
         /// <param name="a_streamCreator"></param>
         /// <example>
         /// var config = new VncConfig("192.168.1.1", 5900, "password", true);
-        /// var client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)));
+        /// var client = new VncClient(config, (s) => new BufferedStream(new NetworkStream(s)), (s) => new NetworkStream(s));
         /// </example>
-        public VncClient(VncConfig a_clientConfig, Func<Socket, Stream> a_streamCreator)
+        public VncClient(VncConfig a_clientConfig, Func<Socket, Stream> a_readStreamCreator, Func<Socket, Stream> a_writeStreamCreator)
         {
-            ClientConfig    = a_clientConfig;
-            m_streamCreator = a_streamCreator;
-            m_canvasLock    = new object();
+            ClientConfig         = a_clientConfig;
+            m_readStreamCreator  = a_readStreamCreator;
+            m_writeStreamCreator = a_writeStreamCreator;
+            m_canvasLock         = new object();
         }
 
         public void CloseVnc()
         {
-            m_stream?.Dispose();    m_stream = null;
-            m_tcpClient?.Dispose(); m_tcpClient = null;
+            m_readStream?.Dispose();  m_readStream  = null;
+            m_writeStream?.Dispose(); m_writeStream = null;
+            m_tcpClient?.Dispose();   m_tcpClient = null;
         }
 
         public async Task<bool> ConnectVncAsync()
@@ -152,22 +157,23 @@ namespace VncLibrary
                 m_tcpClient = new TcpClient();
                 await m_tcpClient.ConnectAsync(ClientConfig.Address, ClientConfig.Port);
 
-                m_stream = m_streamCreator(m_tcpClient.Client);
+                m_readStream  = m_readStreamCreator(m_tcpClient.Client);
+                m_writeStream = m_writeStreamCreator(m_tcpClient.Client);
 
                 //-----------------------
                 // Handshake
                 //-----------------------
                 // Server -> (ProtocolVersion) -> Client
-                var version = await VncComm.ReadProtocolVersionAsync(m_stream, ClientConfig.ForceVersion);
+                var version = await VncComm.ReadProtocolVersionAsync(m_readStream, ClientConfig.ForceVersion);
 
                 // Server <- (ProtocolVersion) <- Client
-                await VncComm.WriteProtocolVersionAsync(m_stream, version);
+                await VncComm.WriteProtocolVersionAsync(m_writeStream, version);
 
                 // (Security)
                 if (version == VncEnum.Version.Version33)
                 {
                     // Server -> (Security) -> Client
-                    var securityType = await VncComm.ReadSecurityTypeAsync(m_stream);
+                    var securityType = await VncComm.ReadSecurityTypeAsync(m_readStream);
                     if (securityType != VncEnum.SecurityType.None
                     &&  securityType != VncEnum.SecurityType.VNCAuthentication)
                     {
@@ -177,37 +183,37 @@ namespace VncLibrary
                     if (securityType == VncEnum.SecurityType.VNCAuthentication)
                     {
                         // Server -> (VNC Authentication Challenge) -> Client
-                        var challenge = await VncComm.ReadVncChallangeAsync(m_stream);
+                        var challenge = await VncComm.ReadVncChallangeAsync(m_readStream);
 
                         // Server <- (VNC Authentication Response) <- Client
                         byte[] response = encryptChallenge(ClientConfig.Password, challenge);
-                        await VncComm.WriteVncResponseAsync(m_stream, response);
+                        await VncComm.WriteVncResponseAsync(m_writeStream, response);
 
                         // Server -> (Security Result) -> Client
-                        await VncComm.ReadSecurityResultAsync(m_stream, version); // Result is checked in method. So don't check here, 
+                        await VncComm.ReadSecurityResultAsync(m_readStream, version); // Result is checked in method. So don't check here, 
                     }
                 }
                 else
                 {
                     // Server -> (SecurityTypes) -> Client
-                    var securityTypes = await VncComm.ReadSecurityTypesAsync(m_stream);
+                    var securityTypes = await VncComm.ReadSecurityTypesAsync(m_readStream);
 
                     if (securityTypes.Contains(VncEnum.SecurityType.None))
                     {
                         // Server <- (SecurityType) <- Client
-                        await VncComm.WriteSecurityTypeAsync(m_stream, VncEnum.SecurityType.None);
+                        await VncComm.WriteSecurityTypeAsync(m_writeStream, VncEnum.SecurityType.None);
                     }
                     else if (securityTypes.Contains(VncEnum.SecurityType.VNCAuthentication))
                     {
                         // Server <- (SecurityType) <- Client
-                        await VncComm.WriteSecurityTypeAsync(m_stream, VncEnum.SecurityType.VNCAuthentication);
+                        await VncComm.WriteSecurityTypeAsync(m_writeStream, VncEnum.SecurityType.VNCAuthentication);
 
                         // Server -> (VNC Authentication Challenge) -> Client
-                        var challenge = await VncComm.ReadVncChallangeAsync(m_stream);
+                        var challenge = await VncComm.ReadVncChallangeAsync(m_readStream);
 
                         // Server <- (VNC Authentication Response) <- Client
                         byte[] response = encryptChallenge(ClientConfig.Password, challenge);
-                        await VncComm.WriteVncResponseAsync(m_stream, response);
+                        await VncComm.WriteVncResponseAsync(m_writeStream, response);
                     }
                     else
                     {
@@ -215,17 +221,17 @@ namespace VncLibrary
                     }
 
                     // Server -> (Security Result) -> Client
-                    await VncComm.ReadSecurityResultAsync(m_stream, version);
+                    await VncComm.ReadSecurityResultAsync(m_readStream, version);
                 }
 
                 //-----------------------
                 // Initial Message
                 //-----------------------
                 // Server <- (ClientInit) <- Client
-                await VncComm.WriteClientInitAsync(m_stream, VncEnum.SharedFlag.Share);
+                await VncComm.WriteClientInitAsync(m_writeStream, VncEnum.SharedFlag.Share);
 
                 // Server -> (ServerInit) -> Client
-                m_serverInitBody = await VncComm.ReadServerInitAsync(m_stream);
+                m_serverInitBody = await VncComm.ReadServerInitAsync(m_readStream);
 
                 //-----------------------
                 // InitialSettings
@@ -237,13 +243,13 @@ namespace VncLibrary
                                                             VncEnum.EncodeType.Hextile,
                                                             VncEnum.EncodeType.ZRLE,
                                                          };
-                await VncComm.WriteSetEncodingsAsync(m_stream, encodings);
+                await VncComm.WriteSetEncodingsAsync(m_writeStream, encodings);
 
                 //-----------------------
                 // Refresh Framebuffer
                 //-----------------------
                 // Server <- (Refresh Framebuffer) <- Client
-                await VncComm.WriteFramebufferUpdateRequestAsync(m_stream,
+                await VncComm.WriteFramebufferUpdateRequestAsync(m_writeStream,
                                                                  VncEnum.FramebufferUpdateRequestIncremental.UpdateAll,
                                                                  0,
                                                                  0,
@@ -278,7 +284,7 @@ namespace VncLibrary
         {
             try
             {
-                await VncComm.WriteFramebufferUpdateRequestAsync(m_stream,
+                await VncComm.WriteFramebufferUpdateRequestAsync(m_writeStream,
                                                                  VncEnum.FramebufferUpdateRequestIncremental.Incremental,
                                                                  0,
                                                                  0,
@@ -302,7 +308,7 @@ namespace VncLibrary
             m_readingServerMessage = true;
             try
             {
-                var readBody = await VncComm.ReadServerMessage(m_stream,
+                var readBody = await VncComm.ReadServerMessage(m_readStream,
                                                                m_serverInitBody.ServerPixelFormat.BytesPerPixel,
                                                                m_serverInitBody.ServerPixelFormat.BigEndianFlag);
 
@@ -346,6 +352,19 @@ namespace VncLibrary
             }
         }
 
+        public async Task WritePointerEventAsync(VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_x, UInt16 a_y)
+        {
+            try
+            {
+                await VncComm.WritePointerEventAsync(m_writeStream, a_buttonMask, a_x, a_y);
+            }
+            catch (Exception a_ex)
+            {
+                cleanupForDisconnect(a_ex);
+                onDisconnected(new VncCauseEventArgs(a_ex));
+            }
+        }
+
         public byte[] CreateCanvasImage()
         {
             // Lock to not output intermediate results.
@@ -359,8 +378,9 @@ namespace VncLibrary
         {
             m_connected = false;
 
-            m_stream?.Dispose();    m_stream    = null;
-            m_tcpClient?.Dispose(); m_tcpClient = null;
+            m_readStream?.Dispose();  m_readStream  = null;
+            m_writeStream?.Dispose(); m_writeStream = null;
+            m_tcpClient?.Dispose();   m_tcpClient = null;
         }
 
         private static byte[] encryptChallenge(string a_keyString, byte[] a_challenge)

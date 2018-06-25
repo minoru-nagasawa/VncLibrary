@@ -209,7 +209,18 @@ namespace VncLibrary
 
             await a_stream.WriteAsync(buffer, 0, buffer.Length);
         }
-        
+
+        public static async Task WritePointerEventAsync(Stream a_stream, VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_xpos, UInt16 a_ypos)
+        {
+            byte[] buffer = new byte[6];
+            buffer[0] = (byte)VncEnum.MessageTypeClientToServer.PointerEvent; // 5
+            buffer[1] = (byte)a_buttonMask;
+            Array.Copy(BigEndianBitConverter.GetBytes(a_xpos), 0, buffer, 2, 2);
+            Array.Copy(BigEndianBitConverter.GetBytes(a_ypos), 0, buffer, 4, 2);
+
+            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
         #endregion
         
         #region Server -> Client

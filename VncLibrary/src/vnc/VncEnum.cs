@@ -94,5 +94,16 @@ namespace VncLibrary
             Hextile     = 5,
             ZRLE        = 16,
         }
+
+        [Flags]
+        public enum PointerEventButtonMask
+        {
+            None = 0,
+            MouseButtonLeft   = 0b00000001,
+            MouseButtonMiddle = 0b00000010,
+            MouseButtonRight  = 0b00000100,
+            MouseWheelUp      = 0b00001000,
+            MouseWheelDown    = 0b00010000,
+        }
     }
 }
