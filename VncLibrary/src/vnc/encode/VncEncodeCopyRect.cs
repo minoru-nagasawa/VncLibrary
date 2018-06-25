@@ -31,10 +31,23 @@ namespace VncLibrary
 
         public override void Draw(IVncPixelGetter a_pixelGetter, MatOfByte3 a_mat)
         {
-            using (var src = a_mat.Clone(new Rect(SrcX, SrcY, Width, Height)))
-            using (var dst = new MatOfByte3(a_mat, new Rect(X, Y, Width, Height)))
+            Rect srcRect = new Rect(SrcX, SrcY, Width, Height);
+            Rect dstRect = new Rect(X, Y, Width, Height);
+            if (srcRect.IntersectsWith(dstRect))
             {
-                src.CopyTo(dst);
+                using (var src = a_mat.Clone(srcRect))
+                using (var dst = new MatOfByte3(a_mat, dstRect))
+                {
+                    src.CopyTo(dst);
+                }
+            }
+            else
+            {
+                using (var src = new MatOfByte3(a_mat, srcRect))
+                using (var dst = new MatOfByte3(a_mat, dstRect))
+                {
+                    src.CopyTo(dst);
+                }
             }
         }
 
