@@ -31,8 +31,8 @@ namespace VncLibrary
 
         public override void Draw(IVncPixelGetter a_pixelGetter, MatOfByte3 a_mat)
         {
-            using (var src = new MatOfByte3(a_mat, new Rect(SrcX, SrcY, Width, Height)))
-            using (var dst = new MatOfByte3(a_mat, new Rect(   X,    Y, Width, Height)))
+            using (var src = a_mat.Clone(new Rect(SrcX, SrcY, Width, Height)))
+            using (var dst = new MatOfByte3(a_mat, new Rect(X, Y, Width, Height)))
             {
                 src.CopyTo(dst);
             }
