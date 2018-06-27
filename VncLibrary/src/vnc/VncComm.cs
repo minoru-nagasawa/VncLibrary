@@ -221,8 +221,18 @@ namespace VncLibrary
             await a_stream.WriteAsync(buffer, 0, buffer.Length);
         }
 
+        public static async Task WriteKeyEventAsync(Stream a_stream, VncEnum.KeyEventDownFlag a_downFlag, UInt32 a_key)
+        {
+            byte[] buffer = new byte[8];
+            buffer[0] = (byte)VncEnum.MessageTypeClientToServer.KeyEvent; // 4
+            buffer[1] = (byte)a_downFlag;
+            Array.Copy(BigEndianBitConverter.GetBytes(a_key), 0, buffer, 4, 4);
+
+            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
         #endregion
-        
+
         #region Server -> Client
         /// <summary>
         /// 

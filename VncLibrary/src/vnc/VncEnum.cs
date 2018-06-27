@@ -105,5 +105,11 @@ namespace VncLibrary
             MouseWheelUp      = 0b00001000,
             MouseWheelDown    = 0b00010000,
         }
+
+        public enum KeyEventDownFlag
+        {
+            KeyUp    = 0,
+            KeyPress = 1
+        }
     }
 }

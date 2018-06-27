@@ -352,6 +352,19 @@ namespace VncLibrary
             }
         }
 
+        public async Task WriteKeyEventAsync(VncEnum.KeyEventDownFlag a_downFlag, UInt32 a_key)
+        {
+            try
+            {
+                await VncComm.WriteKeyEventAsync(m_writeStream, a_downFlag, a_key);
+            }
+            catch (Exception a_ex)
+            {
+                cleanupForDisconnect(a_ex);
+                onDisconnected(new VncCauseEventArgs(a_ex));
+            }
+        }
+
         public async Task WritePointerEventAsync(VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_x, UInt16 a_y)
         {
             try
