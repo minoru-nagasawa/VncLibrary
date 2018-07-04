@@ -10,30 +10,15 @@ namespace VncLibrary
 {
     public static class StreamExtensions
     {
-        public static async Task<int> ReadAllAsync(this Stream a_stream, byte[] a_buffer, int a_offset, int a_size)
+        public static int ReadAll(this Stream a_stream, byte[] a_buffer, int a_offset, int a_size)
         {
-            int remains = a_size;
+            int remains       = a_size;
             int currentOffset = a_offset;
-            using (var signal = new SemaphoreSlim(0, 1))
+            while (remains != 0)
             {
-                AsyncCallback callback = null;
-                callback = (ar) =>
-                {
-                    int readSize = a_stream.EndRead(ar);
-                    remains       -= readSize;
-                    currentOffset += readSize;
-                    if (remains == 0)
-                    {
-                        signal.Release();
-                    }
-                    else
-                    {
-                        a_stream.BeginRead(a_buffer, currentOffset, remains, callback, a_stream);
-                    }
-                };
-
-                a_stream.BeginRead(a_buffer, currentOffset, remains, callback, a_stream);
-                await signal.WaitAsync();
+                int readSize = a_stream.Read(a_buffer, currentOffset, remains);
+                remains       -= readSize;
+                currentOffset += readSize;
             }
             return a_size;
         }

@@ -36,6 +36,7 @@
             this.c_vnc33CheckBox = new System.Windows.Forms.CheckBox();
             this.c_connectButton = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.c_vncControl = new VncUiLibrary.VncControl();
             this.SuspendLayout();
             // 
             // label1
@@ -94,13 +95,24 @@
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 26);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(61, 4);
+            // 
+            // c_vncControl
+            // 
+            this.c_vncControl.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_vncControl.Location = new System.Drawing.Point(12, 31);
+            this.c_vncControl.Name = "c_vncControl";
+            this.c_vncControl.Size = new System.Drawing.Size(464, 350);
+            this.c_vncControl.TabIndex = 7;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(488, 393);
+            this.Controls.Add(this.c_vncControl);
             this.Controls.Add(this.c_connectButton);
             this.Controls.Add(this.c_vnc33CheckBox);
             this.Controls.Add(this.c_passwordTextBox);
@@ -124,6 +136,7 @@
         private System.Windows.Forms.CheckBox c_vnc33CheckBox;
         private System.Windows.Forms.Button c_connectButton;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
+        private VncUiLibrary.VncControl c_vncControl;
     }
 }
 
