@@ -95,7 +95,10 @@ namespace VncUiLibrary
                         m_client.WritePointerEvent(m_last.Mask, (UInt16)m_last.X, (UInt16)m_last.Y);
                         m_last.Enable = false;
                     }
-                    BitmapConverter.ToBitmap(m_client.InternalCanvas, (Bitmap)m_image);
+                    lock (m_client.CanvasLock)
+                    {
+                        BitmapConverter.ToBitmap(m_client.InternalCanvas, (Bitmap)m_image);
+                    }
                     e.Graphics.DrawImage(m_image, 0, 0, this.Width, this.Height);
                     m_client.WriteFramebufferUpdateRequest();
                 }

@@ -85,6 +85,11 @@ namespace VncLibrary
                 return m_canvas;
             }
         }
+        public object CanvasLock
+        {
+            get;
+            private set;
+        }
 
         public event VncSimpleEventHandler ConnectedEvent;
         protected void onConnected()
@@ -122,7 +127,6 @@ namespace VncLibrary
         private IVncPixelGetter     m_pixelGetterNormal;
         private IVncPixelGetter     m_pixelGetterZrle;
         private MatOfByte3          m_canvas;
-        private object              m_canvasLock;
 
         /// <summary>
         /// 
@@ -138,7 +142,7 @@ namespace VncLibrary
             ClientConfig         = a_clientConfig;
             m_readStreamCreator  = a_readStreamCreator;
             m_writeStreamCreator = a_writeStreamCreator;
-            m_canvasLock         = new object();
+            CanvasLock           = new object();
         }
 
         public void DisconnectVnc()
@@ -322,7 +326,7 @@ namespace VncLibrary
                                                                                 m_serverInitBody.ServerPixelFormat.BigEndianFlag);
                     
                     // Draw to canvas
-                    lock (m_canvasLock)
+                    lock (CanvasLock)
                     {
                         foreach (var e in encodeList)
                         {
@@ -385,7 +389,7 @@ namespace VncLibrary
         public byte[] CreateCanvasImage()
         {
             // Lock to not output intermediate results.
-            lock (m_canvasLock)
+            lock (CanvasLock)
             {
                 return m_canvas.ImEncode(".png", new ImageEncodingParam(ImwriteFlags.PngCompression, 3));
             }
