@@ -9,29 +9,29 @@ namespace VncLibrary
 {
     public static class VncEncodeFactory
     {
-        public static async Task<List<VncEncodeAbstract>> CreateVncEncodeFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static List<VncEncodeAbstract> CreateVncEncodeFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             var vncEncodeList = new List<VncEncodeAbstract>();
 
             // Read padding(1) - number-of-rectangles(2)
             byte[] head = new byte[3];
-            await a_stream.ReadAllAsync(head, 0, head.Length);
+            a_stream.ReadAll(head, 0, head.Length);
             UInt16 numberOfRectangle = BigEndianBitConverter.ToUInt16(head, 1);
 
             // Read rectangles
             for (int i = 0; i < numberOfRectangle; ++i)
             {
-                var encode = await createVncEncodeFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian);
+                var encode = createVncEncodeFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian);
                 vncEncodeList.Add(encode);
             }
 
             return vncEncodeList;
         }
 
-        private static async Task<VncEncodeAbstract> createVncEncodeFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static VncEncodeAbstract createVncEncodeFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             byte[] header = new byte[12];
-            await a_stream.ReadAllAsync(header, 0, header.Length);
+            a_stream.ReadAll(header, 0, header.Length);
 
             UInt16 x = BigEndianBitConverter.ToUInt16(header, 0);
             UInt16 y = BigEndianBitConverter.ToUInt16(header, 2);
@@ -43,12 +43,12 @@ namespace VncLibrary
             {
             case VncEnum.EncodeType.Raw:
                 byte[] rawPixel = new byte[w * h * a_bytesPerPixel];
-                await a_stream.ReadAllAsync(rawPixel, 0, rawPixel.Length);
+                a_stream.ReadAll(rawPixel, 0, rawPixel.Length);
                 return new VncEncodeRaw(x, y, w, h, rawPixel, 0);
 
             case VncEnum.EncodeType.CopyRect:
                 byte[] copyRectPixel = new byte[4];
-                await a_stream.ReadAllAsync(copyRectPixel, 0, copyRectPixel.Length);
+                a_stream.ReadAll(copyRectPixel, 0, copyRectPixel.Length);
                 UInt16 sx = BigEndianBitConverter.ToUInt16(copyRectPixel, 0);
                 UInt16 sy = BigEndianBitConverter.ToUInt16(copyRectPixel, 2);
                 return new VncEncodeCopyRect(x, y, w, h, sx, sy);
@@ -56,14 +56,14 @@ namespace VncLibrary
             case VncEnum.EncodeType.RRE:
                 // Read header
                 byte[] rreHeader = new byte[4 + a_bytesPerPixel];
-                await a_stream.ReadAllAsync(rreHeader, 0, rreHeader.Length);
+                a_stream.ReadAll(rreHeader, 0, rreHeader.Length);
                 UInt32 numberOfSubrectangles = BigEndianBitConverter.ToUInt32(rreHeader, 0);
                 byte[] backgroundPixelValue  = VncPixelByteGetter.GetPixelByte(a_bytesPerPixel, rreHeader, 4);
 
                 // Read subrectangles
                 int subrectSize = a_bytesPerPixel + 8;
                 byte[] rreSubrectangles = new byte[subrectSize * numberOfSubrectangles];
-                await a_stream.ReadAllAsync(rreSubrectangles, 0, rreSubrectangles.Length);
+                a_stream.ReadAll(rreSubrectangles, 0, rreSubrectangles.Length);
 
                 // Create subrectangles
                 var subrectangles = new VncEncodeRreSubrectangle[numberOfSubrectangles];
@@ -98,14 +98,14 @@ namespace VncLibrary
 
                         // Read header
                         byte[] subencodingMaskBuffer = new byte[1];
-                        await a_stream.ReadAllAsync(subencodingMaskBuffer, 0, subencodingMaskBuffer.Length);
+                        a_stream.ReadAll(subencodingMaskBuffer, 0, subencodingMaskBuffer.Length);
                         var subencodingMask = new VncEncodeHextileSubencodingMask(subencodingMaskBuffer[0]);
 
                         if (subencodingMask.Raw)
                         {
                             // Read raw pixel data
                             byte[] tilesRawPixel = new byte[tileWidth * tileHeight * a_bytesPerPixel];
-                            await a_stream.ReadAllAsync(tilesRawPixel, 0, tilesRawPixel.Length);
+                            a_stream.ReadAll(tilesRawPixel, 0, tilesRawPixel.Length);
 
                             hextiles[index] = new VncEncodeHextileTileRaw(tilesRawPixel, 0);
                         }
@@ -114,13 +114,13 @@ namespace VncLibrary
                             // Read BackgroundSpecified if needed
                             if (subencodingMask.BackgroundSpecified)
                             {
-                                await a_stream.ReadAllAsync(backgroundPixel, 0, a_bytesPerPixel);
+                                a_stream.ReadAll(backgroundPixel, 0, a_bytesPerPixel);
                             }
 
                             // Read ForegroundSpecified if needed
                             if (subencodingMask.ForegroundSpecified)
                             {
-                                await a_stream.ReadAllAsync(foregroundPixel, 0, a_bytesPerPixel);
+                                a_stream.ReadAll(foregroundPixel, 0, a_bytesPerPixel);
                             }
 
                             // Subrects
@@ -129,7 +129,7 @@ namespace VncLibrary
                             {
                                 // Read number-of-subrectangles
                                 byte[] numberOfSubrectanglesHextileBuffer = new byte[1];
-                                await a_stream.ReadAllAsync(numberOfSubrectanglesHextileBuffer, 0, numberOfSubrectanglesHextileBuffer.Length);
+                                a_stream.ReadAll(numberOfSubrectanglesHextileBuffer, 0, numberOfSubrectanglesHextileBuffer.Length);
                                 byte numberOfSubrectanglesHextile = numberOfSubrectanglesHextileBuffer[0];
 
                                 // Read subrectangle
@@ -139,7 +139,7 @@ namespace VncLibrary
                                     for (int i = 0; i < numberOfSubrectanglesHextile; ++i)
                                     {
                                         byte[] hextileSubrectBuffer = new byte[a_bytesPerPixel + 2];
-                                        await a_stream.ReadAllAsync(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
+                                        a_stream.ReadAll(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
                                         hextileSubrect[i] = new VncEncodeHextileSubrect(VncPixelByteGetter.GetPixelByte(a_bytesPerPixel, hextileSubrectBuffer, 0),
                                                                                         hextileSubrectBuffer[a_bytesPerPixel],
                                                                                         hextileSubrectBuffer[a_bytesPerPixel + 1]);
@@ -150,7 +150,7 @@ namespace VncLibrary
                                     for (int i = 0; i < numberOfSubrectanglesHextile; ++i)
                                     {
                                         byte[] hextileSubrectBuffer = new byte[2];
-                                        await a_stream.ReadAllAsync(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
+                                        a_stream.ReadAll(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
                                         hextileSubrect[i] = new VncEncodeHextileSubrect(foregroundPixel,
                                                                                         hextileSubrectBuffer[a_bytesPerPixel],
                                                                                         hextileSubrectBuffer[a_bytesPerPixel + 1]);
@@ -173,12 +173,12 @@ namespace VncLibrary
             case VncEnum.EncodeType.ZRLE:
                 // Read length
                 byte[] zrleLengthBuffer = new byte[4];
-                await a_stream.ReadAllAsync(zrleLengthBuffer, 0, zrleLengthBuffer.Length);
+                a_stream.ReadAll(zrleLengthBuffer, 0, zrleLengthBuffer.Length);
                 UInt32 zrleLength = BigEndianBitConverter.ToUInt32(zrleLengthBuffer, 0);
 
                 // Read zlib data
                 byte[] zrleZlibData = new byte[zrleLength];
-                await a_stream.ReadAllAsync(zrleZlibData, 0, zrleZlibData.Length);
+                a_stream.ReadAll(zrleZlibData, 0, zrleZlibData.Length);
 
                 return new VncEncodeZrle(x, y, w, h, zrleZlibData, 0);
 
@@ -344,13 +344,13 @@ namespace VncLibrary
             }
         }
 
-        public static async Task<List<byte[]>> CreateVncEncodeBinaryFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static List<byte[]> CreateVncEncodeBinaryFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             var readDataList = new List<byte[]>();
 
             // Read padding(1) - number-of-rectangles(2)
             byte[] head = new byte[3];
-            await a_stream.ReadAllAsync(head, 0, head.Length);
+            a_stream.ReadAll(head, 0, head.Length);
             readDataList.Add(head);
 
             UInt16 numberOfRectangle = BigEndianBitConverter.ToUInt16(head, 1);
@@ -358,27 +358,27 @@ namespace VncLibrary
             // Read rectangles
             for (int i = 0; i < numberOfRectangle; ++i)
             {
-                var encode = await createVncEncodeBinaryFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian);
+                var encode = createVncEncodeBinaryFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian);
                 readDataList.AddRange(encode);
             }
 
             return readDataList;
         }
 
-        private static async Task<List<byte[]>> createVncEncodeBinaryFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static List<byte[]> createVncEncodeBinaryFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             // Add the read data to this list.
             var readDataList = new List<byte[]>();
 
             // Local function for Reading and Storing
-            async Task readAsyncAndStore(byte[] a_buffer, int a_offset, int a_count)
+            void readAndStore(byte[] a_buffer, int a_offset, int a_count)
             {
-                await a_stream.ReadAllAsync(a_buffer, a_offset, a_count);
+                a_stream.ReadAll(a_buffer, a_offset, a_count);
                 readDataList.Add(a_buffer);
             };
 
             byte[] header = new byte[12];
-            await readAsyncAndStore(header, 0, header.Length);
+            readAndStore(header, 0, header.Length);
 
             UInt16 x = BigEndianBitConverter.ToUInt16(header, 0);
             UInt16 y = BigEndianBitConverter.ToUInt16(header, 2);
@@ -390,25 +390,25 @@ namespace VncLibrary
             {
             case VncEnum.EncodeType.Raw:
                 byte[] rawPixel = new byte[w * h * a_bytesPerPixel];
-                await readAsyncAndStore(rawPixel, 0, rawPixel.Length);
+                readAndStore(rawPixel, 0, rawPixel.Length);
                 break;
 
             case VncEnum.EncodeType.CopyRect:
                 byte[] copyRectPixel = new byte[4];
-                await readAsyncAndStore(copyRectPixel, 0, copyRectPixel.Length);
+                readAndStore(copyRectPixel, 0, copyRectPixel.Length);
                 break;
 
             case VncEnum.EncodeType.RRE:
                 // Read header
                 byte[] rreHeader = new byte[4 + a_bytesPerPixel];
-                await readAsyncAndStore(rreHeader, 0, rreHeader.Length);
+                readAndStore(rreHeader, 0, rreHeader.Length);
 
                 UInt32 numberOfSubrectangles = BigEndianBitConverter.ToUInt32(rreHeader, 0);
 
                 // Read subrectangles
                 int subrectSize = a_bytesPerPixel + 8;
                 byte[] rreSubrectangles = new byte[subrectSize * numberOfSubrectangles];
-                await readAsyncAndStore(rreSubrectangles, 0, rreSubrectangles.Length);
+                readAndStore(rreSubrectangles, 0, rreSubrectangles.Length);
                 break;
 
             case VncEnum.EncodeType.Hextile:
@@ -426,14 +426,14 @@ namespace VncLibrary
 
                         // Read header
                         byte[] subencodingMaskBuffer = new byte[1];
-                        await readAsyncAndStore(subencodingMaskBuffer, 0, subencodingMaskBuffer.Length);
+                        readAndStore(subencodingMaskBuffer, 0, subencodingMaskBuffer.Length);
                         var subencodingMask = new VncEncodeHextileSubencodingMask(subencodingMaskBuffer[0]);
 
                         if (subencodingMask.Raw)
                         {
                             // Read raw pixel data
                             byte[] tilesRawPixel = new byte[tileWidth * tileHeight * a_bytesPerPixel];
-                            await readAsyncAndStore(tilesRawPixel, 0, tilesRawPixel.Length);
+                            readAndStore(tilesRawPixel, 0, tilesRawPixel.Length);
                         }
                         else
                         {
@@ -441,14 +441,14 @@ namespace VncLibrary
                             if (subencodingMask.BackgroundSpecified)
                             {
                                 byte[] backgroundPixelBuffer = new byte[a_bytesPerPixel];
-                                await readAsyncAndStore(backgroundPixelBuffer, 0, backgroundPixelBuffer.Length);
+                                readAndStore(backgroundPixelBuffer, 0, backgroundPixelBuffer.Length);
                             }
 
                             // Read ForegroundSpecified if needed
                             if (subencodingMask.ForegroundSpecified)
                             {
                                 byte[] foregroundPixelBuffer = new byte[a_bytesPerPixel];
-                                await readAsyncAndStore(foregroundPixelBuffer, 0, foregroundPixelBuffer.Length);
+                                readAndStore(foregroundPixelBuffer, 0, foregroundPixelBuffer.Length);
                             }
 
                             // Subrects
@@ -456,7 +456,7 @@ namespace VncLibrary
                             {
                                 // Read number-of-subrectangles
                                 byte[] numberOfSubrectanglesHextileBuffer = new byte[1];
-                                await readAsyncAndStore(numberOfSubrectanglesHextileBuffer, 0, numberOfSubrectanglesHextileBuffer.Length);
+                                readAndStore(numberOfSubrectanglesHextileBuffer, 0, numberOfSubrectanglesHextileBuffer.Length);
                                 byte numberOfSubrectanglesHextile = numberOfSubrectanglesHextileBuffer[0];
 
                                 // Read subrectangle
@@ -465,7 +465,7 @@ namespace VncLibrary
                                     for (int i = 0; i < numberOfSubrectanglesHextile; ++i)
                                     {
                                         byte[] hextileSubrectBuffer = new byte[a_bytesPerPixel + 2];
-                                        await readAsyncAndStore(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
+                                        readAndStore(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
                                     }
                                 }
                                 else
@@ -473,7 +473,7 @@ namespace VncLibrary
                                     for (int i = 0; i < numberOfSubrectanglesHextile; ++i)
                                     {
                                         byte[] hextileSubrectBuffer = new byte[2];
-                                        await readAsyncAndStore(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
+                                        readAndStore(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
                                     }
                                 }
                             }
@@ -486,12 +486,12 @@ namespace VncLibrary
             case VncEnum.EncodeType.ZRLE:
                 // Read length
                 byte[] zrleLengthBuffer = new byte[4];
-                await readAsyncAndStore(zrleLengthBuffer, 0, zrleLengthBuffer.Length);
+                readAndStore(zrleLengthBuffer, 0, zrleLengthBuffer.Length);
                 UInt32 zrleLength = BigEndianBitConverter.ToUInt32(zrleLengthBuffer, 0);
 
                 // Read zlib data
                 byte[] zrleZlibData = new byte[zrleLength];
-                await readAsyncAndStore(zrleZlibData, 0, zrleZlibData.Length);
+                readAndStore(zrleZlibData, 0, zrleZlibData.Length);
                 readDataList.Add(zrleZlibData);
 
                 break;

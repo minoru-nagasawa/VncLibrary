@@ -17,10 +17,10 @@ namespace VncLibrary
         event VncReadEventHandler   ReadEvent;
         event VncCauseEventHandler  ConnectFailedEvent;
         event VncCauseEventHandler  DisconnectedEvent;
-        void CloseVnc();
-        Task<bool> ConnectVncAsync();
-        Task WriteFramebufferUpdateRequestAsync();
-        Task<byte[]> ReadServerMessageAsync();
+        void DisconnectVnc();
+        bool ConnectVnc();
+        void WriteFramebufferUpdateRequest();
+        VncReadMessageBody ReadServerMessage();
         byte[] CreateCanvasImage();
     }
 }

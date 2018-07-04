@@ -9,12 +9,12 @@ namespace VncLibrary
             get;
             private set;
         }
-        public byte[] Body
+        public VncReadMessageBody Body
         {
             get;
             private set;
         }
-        public VncReadEventArgs(VncEnum.MessageTypeServerToClient a_type, byte[] a_body)
+        public VncReadEventArgs(VncEnum.MessageTypeServerToClient a_type, VncReadMessageBody a_body)
         {
             MessageType   = a_type;
             Body          = a_body;

@@ -12,10 +12,10 @@ namespace VncLibrary
     public static class VncComm
     {
         #region Handshake
-        public static async Task<VncEnum.Version> ReadProtocolVersionAsync(Stream a_stream, VncEnum.Version a_forceVersion)
+        public static VncEnum.Version ReadProtocolVersion(Stream a_stream, VncEnum.Version a_forceVersion)
         {
             byte[] buffer = new byte[12];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
             if (buffer.SequenceEqual(Encoding.ASCII.GetBytes("RFB 003.003\n"))
             ||  buffer.SequenceEqual(Encoding.ASCII.GetBytes("RFB 003.005\n")))
             {
@@ -42,7 +42,7 @@ namespace VncLibrary
             throw new InvalidDataException($"Unknown version. Length = {buffer.Length} Text = [{Encoding.ASCII.GetString(buffer)}]");
         }
 
-        public static async Task WriteProtocolVersionAsync(Stream a_stream, VncEnum.Version a_version)
+        public static void WriteProtocolVersion(Stream a_stream, VncEnum.Version a_version)
         {
             int version = 0;
             switch (a_version)
@@ -61,13 +61,13 @@ namespace VncLibrary
             }
 
             byte[] buffer = Encoding.ASCII.GetBytes($"RFB 003.00{version}\n");
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task<VncEnum.SecurityType> ReadSecurityTypeAsync(Stream a_stream)
+        public static VncEnum.SecurityType ReadSecurityType(Stream a_stream)
         {
             byte[] buffer = new byte[4];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
 
             UInt32 securityType = BigEndianBitConverter.ToUInt32(buffer, 0);
             if (securityType == (UInt32)VncEnum.SecurityType.Invalid)
@@ -84,22 +84,22 @@ namespace VncLibrary
         /// <param name="a_stream"></param>
         /// <returns></returns>
         /// <remarks>Use this function only for VNC Version 3.7 or later.</remarks>
-        public static async Task<HashSet<VncEnum.SecurityType>> ReadSecurityTypesAsync(Stream a_stream)
+        public static HashSet<VncEnum.SecurityType> ReadSecurityTypes(Stream a_stream)
         {
             // Read number-of-security-types
             byte[] buffer = new byte[1];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
             int numberOfSecurityTypes = buffer[0];
 
             if (numberOfSecurityTypes == 0)
             {
-                string str = await readReasonStringAsync(a_stream);
+                string str = readReasonString(a_stream);
                 throw new SecurityException($"Number-of-security-types is zero. {str}");
             }
 
             // Read security-types
             byte[] securityTypesBuffer = new byte[numberOfSecurityTypes];
-            await a_stream.ReadAllAsync(securityTypesBuffer, 0, numberOfSecurityTypes);
+            a_stream.ReadAll(securityTypesBuffer, 0, numberOfSecurityTypes);
 
             // Create return value
             var securityTypes = new HashSet<VncEnum.SecurityType>();
@@ -111,17 +111,17 @@ namespace VncLibrary
             return securityTypes;
         }
 
-        public static async Task WriteSecurityTypeAsync(Stream a_stream, VncEnum.SecurityType a_securityType)
+        public static void WriteSecurityType(Stream a_stream, VncEnum.SecurityType a_securityType)
         {
             byte[] buffer = new byte[1];
             buffer[0] = (byte)a_securityType;
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task<VncEnum.SecurityResult> ReadSecurityResultAsync(Stream a_stream, VncEnum.Version a_vncVersion)
+        public static VncEnum.SecurityResult ReadSecurityResult(Stream a_stream, VncEnum.Version a_vncVersion)
         {
             byte[] buffer = new byte[4];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
 
             UInt32 securityResult = BigEndianBitConverter.ToUInt32(buffer, 0);
             if (securityResult == (UInt32)VncEnum.SecurityResult.Failed)
@@ -132,7 +132,7 @@ namespace VncLibrary
                 }
                 else
                 {
-                    string str = await readReasonStringAsync(a_stream);
+                    string str = readReasonString(a_stream);
                     throw new SecurityException($"SecurityResult is Failed. ({str})");
                 }
             }
@@ -140,39 +140,39 @@ namespace VncLibrary
             return (VncEnum.SecurityResult)securityResult;
         }
 
-        public static async Task<byte[]> ReadVncChallangeAsync(Stream a_stream)
+        public static byte[] ReadVncChallange(Stream a_stream)
         {
             byte[] buffer = new byte[16];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
 
             return buffer;
         }
 
-        public static async Task WriteVncResponseAsync(Stream a_stream, byte[] a_response)
+        public static void WriteVncResponse(Stream a_stream, byte[] a_response)
         {
-            await a_stream.WriteAsync(a_response, 0, a_response.Length);
+            a_stream.Write(a_response, 0, a_response.Length);
         }
         #endregion
 
         #region Initial Message
-        public static async Task WriteClientInitAsync(Stream a_stream, VncEnum.SharedFlag a_sharedFlag)
+        public static void WriteClientInit(Stream a_stream, VncEnum.SharedFlag a_sharedFlag)
         {
             byte[] buffer = new byte[1];
             buffer[0] = (byte)a_sharedFlag;
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task<VncServerInitBody> ReadServerInitAsync(Stream a_stream)
+        public static VncServerInitBody ReadServerInit(Stream a_stream)
         {
             // Read head for name-length
             byte[] buffer = new byte[24];
-            await a_stream.ReadAllAsync(buffer, 0, buffer.Length);
+            a_stream.ReadAll(buffer, 0, buffer.Length);
 
             int len = (int)BigEndianBitConverter.ToUInt32(buffer, 20);
 
             // Read name-string
             byte[] str = new byte[len];
-            await a_stream.ReadAllAsync(str, 0, len);
+            a_stream.ReadAll(str, 0, len);
 
             // Create VncServerInitBody
             Array.Resize(ref buffer, 24 + len);
@@ -183,7 +183,7 @@ namespace VncLibrary
         #endregion
 
         #region Client -> Server
-        public static async Task WriteFramebufferUpdateRequestAsync(Stream a_stream, VncEnum.FramebufferUpdateRequestIncremental a_incremental, UInt16 a_xpos, UInt16 a_ypos, UInt16 a_width, UInt16 a_height)
+        public static void WriteFramebufferUpdateRequest(Stream a_stream, VncEnum.FramebufferUpdateRequestIncremental a_incremental, UInt16 a_xpos, UInt16 a_ypos, UInt16 a_width, UInt16 a_height)
         {
             byte[] buffer = new byte[10];
             buffer[0] = (byte)VncEnum.MessageTypeClientToServer .FramebufferUpdateRequest; // 3
@@ -193,10 +193,10 @@ namespace VncLibrary
             Array.Copy(BigEndianBitConverter.GetBytes(a_width),  0, buffer, 6, 2);
             Array.Copy(BigEndianBitConverter.GetBytes(a_height), 0, buffer, 8, 2);
 
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task WriteSetEncodingsAsync(Stream a_stream, VncEnum.EncodeType[] a_encodings)
+        public static void WriteSetEncodings(Stream a_stream, VncEnum.EncodeType[] a_encodings)
         {
             byte[] buffer = new byte[4 + 4 * a_encodings.Length];
             buffer[0] = (byte)VncEnum.MessageTypeClientToServer.SetEncodings; // 2
@@ -207,10 +207,10 @@ namespace VncLibrary
                 Array.Copy(BigEndianBitConverter.GetBytes((Int32)a_encodings[i]), 0, buffer, 4 + 4 * i, 4);
             }
 
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task WritePointerEventAsync(Stream a_stream, VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_xpos, UInt16 a_ypos)
+        public static void WritePointerEvent(Stream a_stream, VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_xpos, UInt16 a_ypos)
         {
             byte[] buffer = new byte[6];
             buffer[0] = (byte)VncEnum.MessageTypeClientToServer.PointerEvent; // 5
@@ -218,17 +218,17 @@ namespace VncLibrary
             Array.Copy(BigEndianBitConverter.GetBytes(a_xpos), 0, buffer, 2, 2);
             Array.Copy(BigEndianBitConverter.GetBytes(a_ypos), 0, buffer, 4, 2);
 
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
-        public static async Task WriteKeyEventAsync(Stream a_stream, VncEnum.KeyEventDownFlag a_downFlag, UInt32 a_key)
+        public static void WriteKeyEvent(Stream a_stream, VncEnum.KeyEventDownFlag a_downFlag, UInt32 a_key)
         {
             byte[] buffer = new byte[8];
             buffer[0] = (byte)VncEnum.MessageTypeClientToServer.KeyEvent; // 4
             buffer[1] = (byte)a_downFlag;
             Array.Copy(BigEndianBitConverter.GetBytes(a_key), 0, buffer, 4, 4);
 
-            await a_stream.WriteAsync(buffer, 0, buffer.Length);
+            a_stream.Write(buffer, 0, buffer.Length);
         }
 
         #endregion
@@ -241,23 +241,23 @@ namespace VncLibrary
         /// <param name="a_bytesPerPixel">Use in Encode</param>
         /// <param name="a_isBigendian">Use in Encode</param>
         /// <returns></returns>
-        public static async Task<byte[]> ReadServerMessage(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static byte[] ReadServerMessage(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
             // Read message-type
             byte[] typeBuffer = new byte[1];
-            await a_stream.ReadAllAsync(typeBuffer, 0, typeBuffer.Length);
+            a_stream.ReadAll(typeBuffer, 0, typeBuffer.Length);
             var messageType = (VncEnum.MessageTypeServerToClient)typeBuffer[0];
 
             // Read detail
             switch (messageType)
             {
             case VncEnum.MessageTypeServerToClient.FramebufferUpdate:
-                var framebufferData = await readFramebufferUpdate(a_stream, a_bytesPerPixel, a_isBigendian);
+                var framebufferData = readFramebufferUpdate(a_stream, a_bytesPerPixel, a_isBigendian);
                 framebufferData.Insert(0, typeBuffer);
                 return concatByteArray(framebufferData);
 
             case VncEnum.MessageTypeServerToClient.SetColorMapEntries:
-                var colorMap = await readSetColorMapEntries(a_stream);
+                var colorMap = readSetColorMapEntries(a_stream);
                 colorMap.Insert(0, typeBuffer);
                 return concatByteArray(colorMap);
 
@@ -265,7 +265,7 @@ namespace VncLibrary
                 return typeBuffer;
 
             case VncEnum.MessageTypeServerToClient.ServerCutText:
-                var cutText = await readServerCutText(a_stream);
+                var cutText = readServerCutText(a_stream);
                 cutText.Insert(0, typeBuffer);
                 return concatByteArray(cutText);
 
@@ -280,18 +280,18 @@ namespace VncLibrary
             }
         }
 
-        private static async Task<List<byte[]>> readFramebufferUpdate(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static List<byte[]> readFramebufferUpdate(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
         {
-            return await VncEncodeFactory.CreateVncEncodeBinaryFromStream(a_stream, a_bytesPerPixel, a_isBigendian);
+            return VncEncodeFactory.CreateVncEncodeBinaryFromStream(a_stream, a_bytesPerPixel, a_isBigendian);
         }
 
-        private static async Task<List<byte[]>> readSetColorMapEntries(Stream a_stream)
+        private static List<byte[]> readSetColorMapEntries(Stream a_stream)
         {
             var readDataList = new List<byte[]>();
 
             // Read padding(1) - first-color(2) - number-of-colors(2)
             byte[] head = new byte[5];
-            await a_stream.ReadAllAsync(head, 0, head.Length);
+            a_stream.ReadAll(head, 0, head.Length);
             readDataList.Add(head);
 
             UInt16 numberOfColors = BigEndianBitConverter.ToUInt16(head, 3);
@@ -300,41 +300,41 @@ namespace VncLibrary
             for (int i = 0; i < numberOfColors; ++i)
             {
                 byte[] colors = new byte[6];
-                await a_stream.ReadAllAsync(colors, 0, colors.Length);
+                a_stream.ReadAll(colors, 0, colors.Length);
                 readDataList.Add(colors);
             }
 
             return readDataList;
         }
 
-        private static async Task<List<byte[]>> readServerCutText(Stream a_stream)
+        private static List<byte[]> readServerCutText(Stream a_stream)
         {
             var readDataList = new List<byte[]>();
 
             // Read padding(3) - length(4)
             byte[] head = new byte[7];
-            await a_stream.ReadAllAsync(head, 0, head.Length);
+            a_stream.ReadAll(head, 0, head.Length);
             readDataList.Add(head);
 
             UInt16 length = BigEndianBitConverter.ToUInt16(head, 3);
 
             // Read text(length)
             byte[] textBuffer = new byte[length];
-            await a_stream.ReadAllAsync(textBuffer, 0, textBuffer.Length);
+            a_stream.ReadAll(textBuffer, 0, textBuffer.Length);
             readDataList.Add(textBuffer);
 
             return readDataList;
         }
         #endregion
 
-        private static async Task<string> readReasonStringAsync(Stream a_stream)
+        private static string readReasonString(Stream a_stream)
         {
             byte[] reasonLength = new byte[4];
-            await a_stream.ReadAllAsync(reasonLength, 0, reasonLength.Length);
+            a_stream.ReadAll(reasonLength, 0, reasonLength.Length);
             UInt32 len = BigEndianBitConverter.ToUInt32(reasonLength, 0);
 
             byte[] reasonString = new byte[len];
-            await a_stream.ReadAllAsync(reasonString, 0, (int)len);
+            a_stream.ReadAll(reasonString, 0, (int)len);
             string str = Encoding.ASCII.GetString(reasonString);
 
             return str;
