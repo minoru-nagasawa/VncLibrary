@@ -25,6 +25,11 @@ namespace SampleVncViewer
             c_addressTextBox.Text = Properties.Settings.Default.Address;
             c_passwordTextBox.Text = Properties.Settings.Default.Password;
             c_vnc33CheckBox.Checked = Properties.Settings.Default.Use33;
+            c_vncControl.DisconnectedEvent += (s, e) =>
+            {
+                c_connectButton.Text = "Connect";
+                m_connectMode = true;
+            };
 
             m_connectMode = true;
         }

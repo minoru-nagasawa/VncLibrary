@@ -45,11 +45,15 @@ namespace VncUiLibrary
         [DllImport("user32.dll")]
         static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool bErase);
 
+        public event VncCauseEventHandler DisconnectedEvent;
+
+        private IntPtr    m_handle;
         private VncClient m_client;
         private Task      m_readTask;
         private CancellationTokenSource m_cancelTokenSource;
         private Image     m_image;
         private PointerEventParameter m_last;
+        private DateTime m_lastPointerSendDt;
 
         public VncControl()
         {
@@ -77,7 +81,9 @@ namespace VncUiLibrary
             this.MouseUp    += mouseEvent;
             this.MouseMove  += mouseEvent;
 
-            m_last = new PointerEventParameter();
+            m_handle = this.Handle;
+            m_last   = new PointerEventParameter();
+            m_lastPointerSendDt = new DateTime();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -93,6 +99,7 @@ namespace VncUiLibrary
                     if (m_last.Enable)
                     {
                         m_client.WritePointerEvent(m_last.Mask, (UInt16)m_last.X, (UInt16)m_last.Y);
+                        m_lastPointerSendDt = DateTime.Now;
                         m_last.Enable = false;
                     }
                     lock (m_client.CanvasLock)
@@ -114,7 +121,27 @@ namespace VncUiLibrary
             // Connect Vnc
             m_client?.Dispose();
             m_client = new VncClient(a_config, (s) => new BufferedStream(new NetworkStream(s)), (s) => new NetworkStream(s));
+            m_client.DisconnectedEvent += (s, e) =>
+            {
+                if (InvokeRequired)
+                {
+                    Invoke((MethodInvoker)delegate
+                    {
+                        DisconnectedEvent?.Invoke(s, e);
+                    });
+                }
+                else
+                {
+                    DisconnectedEvent?.Invoke(s, e);
+                }
+            };
             bool retVal = m_client.ConnectVnc();
+            if (!retVal)
+            {
+                m_client.Dispose();
+                m_client = null;
+                return false;
+            }
 
             // Create new image to draw OpenCv Mat. 
             m_image?.Dispose();
@@ -124,7 +151,6 @@ namespace VncUiLibrary
             m_cancelTokenSource?.Dispose();
             m_cancelTokenSource = new CancellationTokenSource();
             var token = m_cancelTokenSource.Token;
-            var handle = this.Handle;
             m_readTask?.Dispose();
             m_readTask = Task.Factory.StartNew(() =>
             {
@@ -132,10 +158,21 @@ namespace VncUiLibrary
                 {
                     if (m_client != null && m_client.Connected)
                     {
+                        // If Read is failed, it returns null.
                         var body = m_client.ReadServerMessage();
+                        if (body == null)
+                        {
+                            // Disconnect
+                            m_client?.DisconnectVnc();
+
+                            // Execute to draw this control black.
+                            // Without this, the screen will not be updated and the VNC image will remain.
+                            InvalidateRect(m_handle, (IntPtr)0, false);
+                            return;
+                        }
                         if (body.MessageType == VncEnum.MessageTypeServerToClient.FramebufferUpdate)
                         {
-                            InvalidateRect(handle, (IntPtr)0, false);
+                            InvalidateRect(m_handle, (IntPtr)0, false);
                         }
                         if (token.IsCancellationRequested)
                         {
@@ -157,15 +194,15 @@ namespace VncUiLibrary
             // Therefore, send FramebufferUpdate so that the client sends a message.
             m_client?.WriteFramebufferUpdateRequest();
 
-            // Wait for completion or timeout (1 minute).
-            m_readTask?.Wait(60 * 1000);
+            // Wait for completion or timeout (1 second).
+            m_readTask?.Wait(1 * 1000);
 
             // Disconnect
             m_client?.DisconnectVnc();
 
             // Execute to draw this control black.
             // Without this, the screen will not be updated and the VNC image will remain.
-            InvalidateRect(this.Handle, (IntPtr)0, false);
+            InvalidateRect(m_handle, (IntPtr)0, false);
         }
 
         private void mouseEvent(object sender, MouseEventArgs e)
@@ -199,10 +236,20 @@ namespace VncUiLibrary
                     mask |= VncEnum.PointerEventButtonMask.MouseWheelDown;
                 }
 
-                m_last.Enable = true;
-                m_last.Mask   = mask;
-                m_last.X      = xpos;
-                m_last.Y      = ypos;
+                // If FramebufferUpdate is not received, the screen is not updated and the mouse pointer event is not send.
+                // Because there is such a scene, if you do not send the mouse pointer event for a certain time, send it.
+                if ((DateTime.Now - m_lastPointerSendDt).TotalMilliseconds > 20)
+                {
+                    m_client.WritePointerEvent(mask, (UInt16)xpos, (UInt16)ypos);
+                    m_last.Enable = false;
+                }
+                else
+                {
+                    m_last.Enable = true;
+                    m_last.Mask   = mask;
+                    m_last.X      = xpos;
+                    m_last.Y      = ypos;
+                }
             }
         }
     }
