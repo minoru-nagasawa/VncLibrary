@@ -140,8 +140,20 @@ namespace VncUiLibrary
 
         protected override void WndProc(ref Message a_msg)
         {
+            const int WM_SIZE       = 0x0005;
             const int WM_UPDATEUISTATE = 0x0128;
-            if (a_msg.Msg == WM_UPDATEUISTATE)
+
+            if (a_msg.Msg == WM_SIZE)
+            {
+                // When minimizing the window, LParam is 0.
+                // When restoreing the window, LParam is not 0.
+                const int SIZE_RESTORED = 0;
+                if ((int) a_msg.WParam == SIZE_RESTORED && (int)a_msg.LParam != 0)
+                {
+                    m_needsRedraw = true;
+                }
+            }
+            else if (a_msg.Msg == WM_UPDATEUISTATE)
             {
                 // When TAB or Alt is pressed, this control is cleared.
                 // Therefore, when this event is received, redraw this control.
@@ -333,6 +345,13 @@ namespace VncUiLibrary
         {
             if (m_client != null && m_client.Connected)
             {
+                // If the size is too small, Numerator will be 0.
+                // In this case, divide by 0, so do not do anything
+                if (m_xZoom.Numerator == 0 || m_yZoom.Numerator == 0)
+                {
+                    return;
+                }
+
                 int xpos = (int)(e.X * m_xZoom.Denominator / m_xZoom.Numerator);
                 int ypos = (int)(e.Y * m_yZoom.Denominator / m_yZoom.Numerator);
 
