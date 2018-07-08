@@ -108,8 +108,8 @@ namespace VncLibrary
 
         public enum KeyEventDownFlag
         {
-            KeyUp    = 0,
-            KeyPress = 1
+            KeyUp   = 0,
+            KeyDown = 1
         }
     }
 }

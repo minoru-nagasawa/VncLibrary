@@ -58,6 +58,7 @@ namespace VncUiLibrary
         private Size      m_prevSize;
         private Fraction  m_xZoom;
         private Fraction  m_yZoom;
+        private bool      m_needsRedraw;
 
         /// <summary>
         /// </summary>
@@ -71,6 +72,13 @@ namespace VncUiLibrary
         {
             InitializeComponent();
 
+            m_handle = this.Handle;
+            m_last   = new PointerEventParameter();
+            m_lastPointerSendDt = new DateTime();
+            m_encodeList = new List<List<VncEncodeAbstract>>();
+            m_prevSize = new Size();
+            m_needsRedraw = false;
+
             // Dispose resouce
             this.Disposed += (s, e) =>
             {
@@ -82,6 +90,44 @@ namespace VncUiLibrary
                 m_image?.Dispose();
             };
 
+            // Set keyboard event
+            this.KeyPress += (s, e) =>
+            {
+                if (m_client != null && m_client.Connected)
+                {
+                    // for text
+                    m_client.WriteKeyEvent(VncEnum.KeyEventDownFlag.KeyDown, (uint)e.KeyChar);
+                    m_client.WriteKeyEvent(VncEnum.KeyEventDownFlag.KeyUp,   (uint)e.KeyChar);
+                    e.Handled = true;
+                }
+            };
+            this.KeyDown += (s, e) =>
+            {
+                if (m_client != null && m_client.Connected)
+                {
+                    uint key = VncWindowsKeyMap.GetVncKey((uint)e.KeyCode);
+                    if (key != 0)
+                    {
+                        // for special key
+                        m_client.WriteKeyEvent(VncEnum.KeyEventDownFlag.KeyDown, key);
+                        e.Handled = true;
+                    }
+                }
+            };
+            this.KeyUp += (s, e) =>
+            {
+                if (m_client != null && m_client.Connected)
+                {
+                    uint key = VncWindowsKeyMap.GetVncKey((uint)e.KeyCode);
+                    if (key != 0)
+                    {
+                        // for special key
+                        m_client.WriteKeyEvent(VncEnum.KeyEventDownFlag.KeyUp, key);
+                        e.Handled = true;
+                    }
+                }
+            };
+
             // If this is not set, changing the size will not erase existing pictures.
             this.ResizeRedraw = true;
 
@@ -90,12 +136,20 @@ namespace VncUiLibrary
             this.MouseDown  += mouseEvent;
             this.MouseUp    += mouseEvent;
             this.MouseMove  += mouseEvent;
+        }
 
-            m_handle = this.Handle;
-            m_last   = new PointerEventParameter();
-            m_lastPointerSendDt = new DateTime();
-            m_encodeList = new List<List<VncEncodeAbstract>>();
-            m_prevSize = new Size();
+        protected override void WndProc(ref Message a_msg)
+        {
+            const int WM_UPDATEUISTATE = 0x0128;
+            if (a_msg.Msg == WM_UPDATEUISTATE)
+            {
+                // When TAB or Alt is pressed, this control is cleared.
+                // Therefore, when this event is received, redraw this control.
+                // https://blogs.msdn.microsoft.com/oldnewthing/20161212-00/?p=94915
+                m_needsRedraw = true;
+                return;
+            }
+            base.WndProc(ref a_msg);
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -123,11 +177,13 @@ namespace VncUiLibrary
                         BitmapConverter.ToBitmap(m_client.InternalCanvas, (Bitmap)m_image);
 
                         // When the size changes, redraw it all.
-                        if (m_prevSize.Width != this.Width || m_prevSize.Height != this.Height)
+                        // Or if the focus is lost, redraw it all.
+                        if (m_prevSize.Width != this.Width || m_prevSize.Height != this.Height || m_needsRedraw)
                         {
                             m_prevSize.Width  = this.Width;
                             m_prevSize.Height = this.Height;
-                        
+                            m_needsRedraw = false;
+
                             // I could not draw correctly if the size was not an integer ratio.
                             // Therefore, find the integer ratio that the denominator becomes 10 or less.
                             m_xZoom = new Fraction(this.Width,  m_client.ServerInitBody.FramebufferWidth,  10);
