@@ -54,7 +54,19 @@ namespace VncUiLibrary
         private Image     m_image;
         private PointerEventParameter m_last;
         private DateTime m_lastPointerSendDt;
+        private List<List<VncEncodeAbstract>> m_encodeList;
+        private Size      m_prevSize;
+        private Fraction  m_xZoom;
+        private Fraction  m_yZoom;
 
+        /// <summary>
+        /// </summary>
+        /// <remarks>
+        /// Initially double-buffering was enabled..
+        /// However, in the case of double-buffering, it is necessary to update the whole screen every time.
+        /// This is very slow.
+        /// Therefore, double-buffering is invalidated and I draw only difference.
+        /// </remarks>
         public VncControl()
         {
             InitializeComponent();
@@ -70,10 +82,8 @@ namespace VncUiLibrary
                 m_image?.Dispose();
             };
 
-            // For double buffering
-            this.SetStyle(ControlStyles.DoubleBuffer, true);
-            this.SetStyle(ControlStyles.UserPaint,    true);
-            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            // If this is not set, changing the size will not erase existing pictures.
+            this.ResizeRedraw = true;
 
             // Set mouse event
             this.MouseWheel += mouseEvent;
@@ -84,6 +94,8 @@ namespace VncUiLibrary
             m_handle = this.Handle;
             m_last   = new PointerEventParameter();
             m_lastPointerSendDt = new DateTime();
+            m_encodeList = new List<List<VncEncodeAbstract>>();
+            m_prevSize = new Size();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -102,11 +114,59 @@ namespace VncUiLibrary
                         m_lastPointerSendDt = DateTime.Now;
                         m_last.Enable = false;
                     }
+
+                    // NearestNeighbor is the fastest.
+                    e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+
                     lock (m_client.CanvasLock)
                     {
                         BitmapConverter.ToBitmap(m_client.InternalCanvas, (Bitmap)m_image);
+
+                        // When the size changes, redraw it all.
+                        if (m_prevSize.Width != this.Width || m_prevSize.Height != this.Height)
+                        {
+                            m_prevSize.Width  = this.Width;
+                            m_prevSize.Height = this.Height;
+                        
+                            // I could not draw correctly if the size was not an integer ratio.
+                            // Therefore, find the integer ratio that the denominator becomes 10 or less.
+                            m_xZoom = new Fraction(this.Width,  m_client.ServerInitBody.FramebufferWidth,  10);
+                            m_yZoom = new Fraction(this.Height, m_client.ServerInitBody.FramebufferHeight, 10);
+
+                            int width  = (int)(m_client.ServerInitBody.FramebufferWidth  * m_xZoom.Numerator / m_xZoom.Denominator);
+                            int height = (int)(m_client.ServerInitBody.FramebufferHeight * m_yZoom.Numerator / m_yZoom.Denominator);
+                        
+                            // Redraw  all
+                            e.Graphics.DrawImage(m_image, 0, 0, width, height);
+                        }
+                        // If the size is the same, draw only the difference.
+                        else
+                        {
+                            foreach (var list in m_encodeList)
+                            {
+                                foreach (var v in list)
+                                {
+                                    // To draw correctly, I calculate drawing source rectangle and drawing destination rectangle.
+                                    // ex.
+                                    //   Framebuffer = 640x480
+                                    //   Control     = 320x240
+                                    //   Source Rectangle(x,y,w,h) =  (101, 101, 10, 10)
+                                    //                             => (100, 100, 12, 12) (Convert to be divisible)
+                                    //   Dest   Rectangle(x,y,w,h) => (50,   50,  5,  5)
+                                    int newX = (int)(v.X / m_xZoom.Denominator) * m_xZoom.Denominator;
+                                    int newY = (int)(v.Y / m_yZoom.Denominator) * m_yZoom.Denominator;
+                                    int newW = (int)(Math.Ceiling((double)(v.Width  + v.X - newX) / m_xZoom.Denominator) * m_xZoom.Denominator);
+                                    int newH = (int)(Math.Ceiling((double)(v.Height + v.Y - newY) / m_yZoom.Denominator) * m_yZoom.Denominator);
+                                    int xpos = newX * m_xZoom.Numerator / m_xZoom.Denominator;
+                                    int ypos = newY * m_yZoom.Numerator / m_yZoom.Denominator;
+                                    int width  = newW * m_xZoom.Numerator / m_xZoom.Denominator;
+                                    int height = newH * m_yZoom.Numerator / m_yZoom.Denominator;
+                                    e.Graphics.DrawImage(m_image, new Rectangle(xpos, ypos, width, height), newX, newY, newW, newH, GraphicsUnit.Pixel);
+                                }
+                            }
+                            m_encodeList.Clear();
+                        }
                     }
-                    e.Graphics.DrawImage(m_image, 0, 0, this.Width, this.Height);
                     m_client.WriteFramebufferUpdateRequest();
                 }
                 else
@@ -143,6 +203,10 @@ namespace VncUiLibrary
                 return false;
             }
 
+            // Initialize zoom ratio for mouseEvent.
+            m_xZoom = new Fraction(this.Width,  m_client.ServerInitBody.FramebufferWidth,  10);
+            m_yZoom = new Fraction(this.Height, m_client.ServerInitBody.FramebufferHeight, 10);
+
             // Create new image to draw OpenCv Mat. 
             m_image?.Dispose();
             m_image = new Bitmap(m_client.ServerInitBody.FramebufferWidth, m_client.ServerInitBody.FramebufferHeight, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
@@ -173,6 +237,10 @@ namespace VncUiLibrary
                         if (body.MessageType == VncEnum.MessageTypeServerToClient.FramebufferUpdate)
                         {
                             InvalidateRect(m_handle, (IntPtr)0, false);
+                            lock (m_client.CanvasLock)
+                            {
+                                m_encodeList.Add(body.EncodeList);
+                            }
                         }
                         if (token.IsCancellationRequested)
                         {
@@ -209,10 +277,8 @@ namespace VncUiLibrary
         {
             if (m_client != null && m_client.Connected)
             {
-                double xzoom = (double)this.Width  / m_client.ServerInitBody.FramebufferWidth;
-                double yzoom = (double)this.Height / m_client.ServerInitBody.FramebufferHeight;
-                int xpos = (int)(e.X / xzoom);
-                int ypos = (int)(e.Y / yzoom);
+                int xpos = (int)(e.X * m_xZoom.Denominator / m_xZoom.Numerator);
+                int ypos = (int)(e.Y * m_yZoom.Denominator / m_yZoom.Numerator);
 
                 VncEnum.PointerEventButtonMask mask = VncEnum.PointerEventButtonMask.None;
                 if (e.Button == MouseButtons.Left)
@@ -245,6 +311,8 @@ namespace VncUiLibrary
                 }
                 else
                 {
+                    // Since it is useless to send every time, only record it.
+                    // Then, it transmits at the interval of OnPaint.
                     m_last.Enable = true;
                     m_last.Mask   = mask;
                     m_last.X      = xpos;
