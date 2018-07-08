@@ -224,8 +224,11 @@ namespace VncLibrary
                         throw new SecurityException($"Unknown security-types. Server can use [{string.Join(",", securityTypes)}].");
                     }
 
-                    // Server -> (Security Result) -> Client
-                    VncComm.ReadSecurityResult(m_readStream, version);
+                    if (version != VncEnum.Version.Version37)
+                    {
+                        // Server -> (Security Result) -> Client
+                        VncComm.ReadSecurityResult(m_readStream, version);
+                    }
                 }
 
                 //-----------------------
