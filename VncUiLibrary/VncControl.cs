@@ -248,7 +248,7 @@ namespace VncUiLibrary
         {
             // Connect Vnc
             m_client?.Dispose();
-            m_client = new VncClient(a_config, (s) => new BufferedStream(new NetworkStream(s)), (s) => new NetworkStream(s));
+            m_client = new VncClient(a_config);
             m_client.DisconnectedEvent += (s, e) =>
             {
                 if (InvokeRequired)

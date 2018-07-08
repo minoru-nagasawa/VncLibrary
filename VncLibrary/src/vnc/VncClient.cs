@@ -129,7 +129,18 @@ namespace VncLibrary
         private MatOfByte3          m_canvas;
 
         /// <summary>
-        /// 
+        /// </summary>
+        /// <param name="a_clientConfig"></param>
+        /// <param name="a_streamCreator"></param>
+        /// <example>
+        /// var config = new VncConfig("192.168.1.1", 5900, "password", true);
+        /// var client = new VncClient(config);
+        /// </example>
+        public VncClient(VncConfig a_clientConfig) : this(a_clientConfig, (s) => new BufferedStream(new NetworkStream(s)), (s) => new NetworkStream(s))
+        {
+        }
+
+        /// <summary>
         /// </summary>
         /// <param name="a_clientConfig"></param>
         /// <param name="a_streamCreator"></param>
