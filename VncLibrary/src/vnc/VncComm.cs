@@ -126,7 +126,8 @@ namespace VncLibrary
             UInt32 securityResult = BigEndianBitConverter.ToUInt32(buffer, 0);
             if (securityResult == (UInt32)VncEnum.SecurityResult.Failed)
             {
-                if (a_vncVersion == VncEnum.Version.Version33)
+                if (a_vncVersion == VncEnum.Version.Version33
+                ||  a_vncVersion == VncEnum.Version.Version37)
                 {
                     throw new SecurityException("SecurityResult is Failed.");
                 }

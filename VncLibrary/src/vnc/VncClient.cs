@@ -217,6 +217,12 @@ namespace VncLibrary
                     {
                         // Server <- (SecurityType) <- Client
                         VncComm.WriteSecurityType(m_writeStream, VncEnum.SecurityType.None);
+
+                        if (version == VncEnum.Version.Version38)
+                        {
+                            // Server -> (Security Result) -> Client
+                            VncComm.ReadSecurityResult(m_readStream, version);
+                        }
                     }
                     else if (securityTypes.Contains(VncEnum.SecurityType.VNCAuthentication))
                     {
@@ -229,17 +235,15 @@ namespace VncLibrary
                         // Server <- (VNC Authentication Response) <- Client
                         byte[] response = encryptChallenge(ClientConfig.Password, challenge);
                         VncComm.WriteVncResponse(m_writeStream, response);
+
+                        // Server -> (Security Result) -> Client
+                        VncComm.ReadSecurityResult(m_readStream, version);
                     }
                     else
                     {
                         throw new SecurityException($"Unknown security-types. Server can use [{string.Join(",", securityTypes)}].");
                     }
 
-                    if (version != VncEnum.Version.Version37)
-                    {
-                        // Server -> (Security Result) -> Client
-                        VncComm.ReadSecurityResult(m_readStream, version);
-                    }
                 }
 
                 //-----------------------
