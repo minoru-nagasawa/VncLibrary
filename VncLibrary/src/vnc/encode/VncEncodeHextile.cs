@@ -72,22 +72,15 @@ namespace VncLibrary
             private set;
         }
 
-        public byte[] Foreground
-        {
-            get;
-            private set;
-        }
-
         public VncEncodeHextileSubrect[] Subrects
         {
             get;
             private set;
         }
 
-        public VncEncodeHextileTileRre(byte[] a_background, byte[] a_foreground, VncEncodeHextileSubrect[] a_subrects)
+        public VncEncodeHextileTileRre(byte[] a_background, VncEncodeHextileSubrect[] a_subrects)
         {
             Background = a_background;
-            Foreground = a_foreground;
             Subrects   = a_subrects;
         }
 
@@ -141,8 +134,8 @@ namespace VncLibrary
             SubrectsColor = a_subrectColor;
             X = (byte)((a_x_and_y >> 4) & 0x0F);
             Y = (byte)((a_x_and_y     ) & 0x0F);
-            Width  = (byte)((a_width_and_height >> 4) & 0x0F);
-            Height = (byte)((a_width_and_height     ) & 0x0F);
+            Width  = (byte)(((a_width_and_height >> 4) & 0x0F) + 1);
+            Height = (byte)(((a_width_and_height     ) & 0x0F) + 1);
         }
     }
 
@@ -169,10 +162,10 @@ namespace VncLibrary
             int tile = 0;
             for (int y = Y; y < Y + Height; y += 16)
             {
-                int h = (Height - y) > 16 ? 16 : (Height - y);
+                int h = (Y + Height - y) > 16 ? 16 : (Y + Height - y);
                 for (int x = X; x < X + Width; x += 16)
                 {
-                    int w = (Width - x) > 16 ? 16 : (Width - x);
+                    int w = (X + Width - x) > 16 ? 16 : (X + Width - x);
                     Hextile[tile].DrawHexTile(x, y, w, h, a_pixelGetter, a_mat);
                     ++tile;
                 }

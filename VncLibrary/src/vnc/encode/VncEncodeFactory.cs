@@ -89,7 +89,7 @@ namespace VncLibrary
                 int index = 0;
                 byte[] backgroundPixel = null;
                 byte[] foregroundPixel = null;
-                for (int ytile = 0; ytile < yTileCount; ++ytile, ++index)
+                for (int ytile = 0; ytile < yTileCount; ++ytile)
                 {
                     int tileHeight = ((ytile == yTileCount - 1) && ((h % 16) != 0)) ? h % 16 : 16;
                     for (int xtile = 0; xtile < xTileCount; ++xtile, ++index)
@@ -152,8 +152,8 @@ namespace VncLibrary
                                         byte[] hextileSubrectBuffer = new byte[2];
                                         a_stream.ReadAll(hextileSubrectBuffer, 0, hextileSubrectBuffer.Length);
                                         hextileSubrect[i] = new VncEncodeHextileSubrect(foregroundPixel,
-                                                                                        hextileSubrectBuffer[a_bytesPerPixel],
-                                                                                        hextileSubrectBuffer[a_bytesPerPixel + 1]);
+                                                                                        hextileSubrectBuffer[0],
+                                                                                        hextileSubrectBuffer[1]);
                                     }
                                 }
                             }
@@ -163,7 +163,7 @@ namespace VncLibrary
                                 hextileSubrect = new VncEncodeHextileSubrect[0];
                             }
 
-                            hextiles[index] = new VncEncodeHextileTileRre(backgroundPixel, foregroundPixel, hextileSubrect);
+                            hextiles[index] = new VncEncodeHextileTileRre(backgroundPixel, hextileSubrect);
                         }
                     }
                 }
@@ -258,7 +258,7 @@ namespace VncLibrary
                 int index  = 0;
                 byte[] backgroundPixel = null;
                 byte[] foregroundPixel = null;
-                for (int ytile = 0; ytile < yTileCount; ++ytile, ++index)
+                for (int ytile = 0; ytile < yTileCount; ++ytile)
                 {
                     int tileHeight = ((ytile == yTileCount - 1) && ((h % 16) != 0)) ? h % 16 : 16;
                     for (int xtile = 0; xtile < xTileCount; ++xtile, ++index)
@@ -315,7 +315,7 @@ namespace VncLibrary
                                 {
                                     for (int i = 0; i < numberOfSubrectanglesHextile; ++i)
                                     {
-                                        hextileSubrect[i] = new VncEncodeHextileSubrect(foregroundPixel, a_body[0], a_body[1]);
+                                        hextileSubrect[i] = new VncEncodeHextileSubrect(foregroundPixel, a_body[offset + 0], a_body[offset + 1]);
                                         offset += 2;
                                     }
                                 }
@@ -326,7 +326,7 @@ namespace VncLibrary
                                 hextileSubrect = new VncEncodeHextileSubrect[0];
                             }
 
-                            hextiles[index] = new VncEncodeHextileTileRre(backgroundPixel, foregroundPixel, hextileSubrect);
+                            hextiles[index] = new VncEncodeHextileTileRre(backgroundPixel, hextileSubrect);
                         }
                     }
                 }
@@ -417,7 +417,7 @@ namespace VncLibrary
 
                 // Loop for each tile
                 int index = 0;
-                for (int ytile = 0; ytile < yTileCount; ++ytile, ++index)
+                for (int ytile = 0; ytile < yTileCount; ++ytile)
                 {
                     int tileHeight = ((ytile == yTileCount - 1) && ((h % 16) != 0)) ? h % 16 : 16;
                     for (int xtile = 0; xtile < xTileCount; ++xtile, ++index)
