@@ -35,7 +35,6 @@ namespace VncLibrary
         }
 
         public abstract void Draw(IVncPixelGetter a_pixelGetter, MatOfByte3 a_mat);
-        public abstract int WriteOptimizedBody(IVncPixelGetter a_pixelGetter, byte[] a_body, int a_basePos, MemoryStream a_output);
         public void WriteBackwardBody(MatOfByte3 a_mat, MemoryStream a_output)
         {
             // 12 == x(2) + y(2) + w(2) + h(2) + encodeType(4)

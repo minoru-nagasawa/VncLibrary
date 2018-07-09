@@ -35,25 +35,5 @@ namespace VncLibrary
                 }
             }
         }
-
-        public override int WriteOptimizedBody(IVncPixelGetter a_pixelGetter, byte[] a_body, int a_basePos, MemoryStream a_output)
-        {
-            // 12 == x(2) + y(2) + w(2) + h(2) + encodeType(4)
-            a_output.Write(a_body, a_basePos, 12);
-            a_basePos += 12;
-
-            int byteSize = a_pixelGetter.GetPixelByteSize();
-            int offset = m_offset;
-            for (int y = Y; y < Y + Height; ++y)
-            {
-                for (int x = X; x < X + Width; ++x)
-                {
-                    writePixelColor(a_pixelGetter, a_body, offset, a_output);
-                    offset += byteSize;
-                }
-            }
-
-            return 12 + Height * Width * byteSize;
-        }
     }
 }

@@ -50,12 +50,5 @@ namespace VncLibrary
                 }
             }
         }
-
-        public override int WriteOptimizedBody(IVncPixelGetter a_pixelGetter, byte[] a_body, int a_basePos, MemoryStream a_output)
-        {
-            // 16 == x(2) + y(2) + w(2) + h(2) + encodeType(4) + srcX(2) + srcY(2)
-            a_output.Write(a_body, a_basePos, 16);
-            return 16;
-        }
     }
 }
