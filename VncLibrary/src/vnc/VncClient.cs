@@ -128,6 +128,8 @@ namespace VncLibrary
         private IVncPixelGetter     m_pixelGetterZrle;
         private MatOfByte3          m_canvas;
 
+        private ZrleDataReader      m_zrleReader;
+
         /// <summary>
         /// </summary>
         /// <param name="a_clientConfig"></param>
@@ -174,6 +176,11 @@ namespace VncLibrary
 
                 m_readStream  = m_readStreamCreator(m_tcpClient.Client);
                 m_writeStream = m_writeStreamCreator(m_tcpClient.Client);
+
+                // ZRLE encoding uses one zlib stream during connection.
+                // Therefore, it generates at the timing of VNC connection.
+                m_zrleReader?.Dispose();
+                m_zrleReader = new ZrleDataReader();
 
                 //-----------------------
                 // Handshake
@@ -259,11 +266,12 @@ namespace VncLibrary
                 // InitialSettings
                 //-----------------------
                 // Server <- (SetEncodings) <- Client
-                var encodings = new VncEnum.EncodeType[] {  VncEnum.EncodeType.Raw,
+                var encodings = new VncEnum.EncodeType[] {
                                                             VncEnum.EncodeType.CopyRect,
-                                                            VncEnum.EncodeType.RRE,
-                                                            VncEnum.EncodeType.Hextile,
                                                             VncEnum.EncodeType.ZRLE,
+                                                            VncEnum.EncodeType.Hextile,
+                                                            VncEnum.EncodeType.RRE,
+                                                            VncEnum.EncodeType.Raw,
                                                          };
                 VncComm.WriteSetEncodings(m_writeStream, encodings);
 
@@ -341,7 +349,8 @@ namespace VncLibrary
                 {
                     var encodeList = VncEncodeFactory.CreateVncEncodeFromBinary(readBody,
                                                                                 m_serverInitBody.ServerPixelFormat.BytesPerPixel,
-                                                                                m_serverInitBody.ServerPixelFormat.BigEndianFlag);
+                                                                                m_serverInitBody.ServerPixelFormat.BigEndianFlag,
+                                                                                m_zrleReader);
                     
                     // Draw to canvas
                     lock (CanvasLock)

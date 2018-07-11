@@ -9,7 +9,7 @@ namespace VncLibrary
 {
     public static class VncEncodeFactory
     {
-        public static List<VncEncodeAbstract> CreateVncEncodeFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        public static List<VncEncodeAbstract> CreateVncEncodeFromStream(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian, ZrleDataReader a_zrleReader)
         {
             var vncEncodeList = new List<VncEncodeAbstract>();
 
@@ -21,14 +21,14 @@ namespace VncLibrary
             // Read rectangles
             for (int i = 0; i < numberOfRectangle; ++i)
             {
-                var encode = createVncEncodeFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian);
+                var encode = createVncEncodeFromStreamSub(a_stream, a_bytesPerPixel, a_isBigendian, a_zrleReader);
                 vncEncodeList.Add(encode);
             }
 
             return vncEncodeList;
         }
 
-        private static VncEncodeAbstract createVncEncodeFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian)
+        private static VncEncodeAbstract createVncEncodeFromStreamSub(Stream a_stream, byte a_bytesPerPixel, bool a_isBigendian, ZrleDataReader a_zrleReader)
         {
             byte[] header = new byte[12];
             a_stream.ReadAll(header, 0, header.Length);
@@ -180,7 +180,7 @@ namespace VncLibrary
                 byte[] zrleZlibData = new byte[zrleLength];
                 a_stream.ReadAll(zrleZlibData, 0, zrleZlibData.Length);
 
-                return new VncEncodeZrle(x, y, w, h, zrleZlibData, 0);
+                return new VncEncodeZrle(x, y, w, h, zrleZlibData, 0, (int) zrleLength, a_zrleReader);
 
             case VncEnum.EncodeType.Cursor:
             case VncEnum.EncodeType.DesktopSize:
@@ -189,7 +189,7 @@ namespace VncLibrary
             }
         }
 
-        public static List<VncEncodeAbstract> CreateVncEncodeFromBinary(byte[] a_body, byte a_bytesPerPixel, bool a_isBigendian)
+        public static List<VncEncodeAbstract> CreateVncEncodeFromBinary(byte[] a_body, byte a_bytesPerPixel, bool a_isBigendian, ZrleDataReader a_zrleReader)
         {
             var vncEncodeList = new List<VncEncodeAbstract>();
 
@@ -199,7 +199,7 @@ namespace VncLibrary
             // Read rectangles (pos = 4 == Message Type(1) + Read padding(1) + number-of-rectangles(2)
             for (int i = 0, pos = 4; i < numberOfRectangle; ++i)
             {
-                var dat = createVncEncodeFromBinarySub(a_body, pos, a_bytesPerPixel, a_isBigendian);
+                var dat = createVncEncodeFromBinarySub(a_body, pos, a_bytesPerPixel, a_isBigendian, a_zrleReader);
                 vncEncodeList.Add(dat.encode);
                 pos += dat.length;
             }
@@ -207,7 +207,7 @@ namespace VncLibrary
             return vncEncodeList;
         }
 
-        private static (VncEncodeAbstract encode, int length) createVncEncodeFromBinarySub(byte[] a_body, int a_basePos, byte a_bytesPerPixel, bool a_isBigendian)
+        private static (VncEncodeAbstract encode, int length) createVncEncodeFromBinarySub(byte[] a_body, int a_basePos, byte a_bytesPerPixel, bool a_isBigendian, ZrleDataReader a_zrleReader)
         {
             UInt16 x = BigEndianBitConverter.ToUInt16(a_body, a_basePos + 0);
             UInt16 y = BigEndianBitConverter.ToUInt16(a_body, a_basePos + 2);
@@ -335,7 +335,7 @@ namespace VncLibrary
 
             case VncEnum.EncodeType.ZRLE:
                 int zrleLength = BigEndianBitConverter.ToInt32(a_body, a_basePos + 12);
-                return (new VncEncodeZrle(x, y, w, h, a_body, a_basePos + 12), 4 + zrleLength);
+                return (new VncEncodeZrle(x, y, w, h, a_body, a_basePos + 16, zrleLength, a_zrleReader), 12 + 4 + zrleLength);
 
             case VncEnum.EncodeType.Cursor:
             case VncEnum.EncodeType.DesktopSize:
@@ -492,7 +492,6 @@ namespace VncLibrary
                 // Read zlib data
                 byte[] zrleZlibData = new byte[zrleLength];
                 readAndStore(zrleZlibData, 0, zrleZlibData.Length);
-                readDataList.Add(zrleZlibData);
 
                 break;
 
