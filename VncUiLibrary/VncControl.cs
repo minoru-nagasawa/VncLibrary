@@ -59,6 +59,7 @@ namespace VncUiLibrary
         private Fraction  m_xZoom;
         private Fraction  m_yZoom;
         private bool      m_needsRedraw;
+        private bool      m_prevConnected;
 
         /// <summary>
         /// </summary>
@@ -77,7 +78,8 @@ namespace VncUiLibrary
             m_lastPointerSendDt = new DateTime();
             m_encodeList = new List<List<VncEncodeAbstract>>();
             m_prevSize = new Size();
-            m_needsRedraw = false;
+            m_needsRedraw   = false;
+            m_prevConnected = false;
 
             // Dispose resouce
             this.Disposed += (s, e) =>
@@ -145,6 +147,8 @@ namespace VncUiLibrary
 
             if (a_msg.Msg == WM_SIZE)
             {
+                // When restoring the window, redraw this control.
+                // Because the screen at the time of restoration has been cleared, it becomes strange to draw only the difference.
                 // When minimizing the window, LParam is 0.
                 // When restoreing the window, LParam is not 0.
                 const int SIZE_RESTORED = 0;
@@ -184,6 +188,16 @@ namespace VncUiLibrary
                     // NearestNeighbor is the fastest.
                     e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
+                    // At the time of connection, the background black is left, so erase it
+                    if (!m_prevConnected)
+                    {
+                        m_prevConnected = true;
+                        e.Graphics.Clear(this.BackColor);
+                    }
+
+                    // Lock to access below.
+                    // - m_client.InternalCanvas
+                    // - m_encodeList
                     lock (m_client.CanvasLock)
                     {
                         BitmapConverter.ToBitmap(m_client.InternalCanvas, (Bitmap)m_image);
@@ -239,6 +253,7 @@ namespace VncUiLibrary
                 }
                 else
                 {
+                    m_prevConnected = false;
                     e.Graphics.FillRectangle(Brushes.Black, 0, 0, this.Width, this.Height);
                 }
             }
@@ -270,6 +285,9 @@ namespace VncUiLibrary
                 m_client = null;
                 return false;
             }
+
+            // Draw the whole for the first time.
+            m_needsRedraw = true;
 
             // Initialize zoom ratio for mouseEvent.
             m_xZoom = new Fraction(this.Width,  m_client.ServerInitBody.FramebufferWidth,  10);
