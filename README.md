@@ -1,4 +1,4 @@
-# VncViewer
+# VncLibrary
 ## Description
 This is the VNC library of MIT licenses written for C#.
 
