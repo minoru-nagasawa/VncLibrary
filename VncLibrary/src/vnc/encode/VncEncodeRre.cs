@@ -79,7 +79,7 @@ namespace VncLibrary
             foreach (var v in Subrectangle)
             {
                 Scalar pixelValue = (Scalar)a_pixelGetter.GetPixelVec3b(v.PixelBinary, 0);
-                a_mat.Rectangle(new Rect(v.X, v.Y, v.Width, v.Height), pixelValue, -1 /* Fill */);
+                a_mat.Rectangle(new Rect(X + v.X, Y + v.Y, v.Width, v.Height), pixelValue, -1 /* Fill */);
             }
         }
     }
