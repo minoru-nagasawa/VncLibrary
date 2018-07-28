@@ -78,17 +78,6 @@ namespace VncUiLibrary
             m_needsRedraw   = false;
             m_prevConnected = false;
 
-            // Dispose resouce
-            this.Disposed += (s, e) =>
-            {
-                Disconnect();
-
-                m_client?.Dispose();
-                m_readTask?.Dispose();
-                m_cancelTokenSource?.Dispose();
-                m_image?.Dispose();
-            };
-
             // Set keyboard event
             this.PreviewKeyDown += (s, e) =>
             {
@@ -161,18 +150,24 @@ namespace VncUiLibrary
             {
                 components.Dispose();
 
+                Disconnect();
+
                 // If it is m_client?.Dispose(), it will be a CA2213 warning.
                 if (m_client != null)
                 {
                     m_client.Dispose();
                 }
-                if (m_image != null)
+                if (m_readTask != null)
                 {
-                    m_image.Dispose();
+                    m_readTask.Dispose();
                 }
                 if (m_cancelTokenSource != null)
                 {
                     m_cancelTokenSource.Dispose();
+                }
+                if (m_image != null)
+                {
+                    m_image.Dispose();
                 }
             }
             base.Dispose(disposing);
@@ -386,8 +381,8 @@ namespace VncUiLibrary
             // Therefore, send FramebufferUpdate so that the client sends a message.
             m_client?.WriteFramebufferUpdateRequest();
 
-            // Wait for completion or timeout (1 second).
-            m_readTask?.Wait(1 * 1000);
+            // Wait for completion or timeout (5 second).
+            m_readTask?.Wait(5 * 1000);
 
             // Disconnect
             m_client?.DisconnectVnc();
