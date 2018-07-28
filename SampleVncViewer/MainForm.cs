@@ -15,11 +15,11 @@ using VncLibrary;
 
 namespace SampleVncViewer
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         private bool m_connectMode;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
             c_addressTextBox.Text = Properties.Settings.Default.Address;
