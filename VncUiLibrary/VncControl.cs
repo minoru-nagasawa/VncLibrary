@@ -93,6 +93,20 @@ namespace VncUiLibrary
             };
 
             // Set keyboard event
+            this.PreviewKeyDown += (s, e) =>
+            {
+                switch (e.KeyData)
+                {
+                    case Keys.Tab:
+                    case Keys.Up:
+                    case Keys.Down:
+                    case Keys.Left:
+                    case Keys.Right:
+                        // Do not move the focus even if you press the key.
+                        e.IsInputKey = true;
+                        break;
+                }
+            };
             this.KeyPress += (s, e) =>
             {
                 if (m_client != null && m_client.Connected)
