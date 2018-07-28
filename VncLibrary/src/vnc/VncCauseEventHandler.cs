@@ -15,5 +15,5 @@ namespace VncLibrary
         }
     }
 
-    public delegate void VncCauseEventHandler(IVncClient a_sender, VncCauseEventArgs a_eventArgs);
+    public delegate void VncCauseEventHandler(object sender, VncCauseEventArgs e);
 }

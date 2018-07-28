@@ -42,9 +42,6 @@ namespace VncUiLibrary
             }
         }
 
-        [DllImport("user32.dll")]
-        static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool bErase);
-
         public event VncCauseEventHandler DisconnectedEvent;
 
         private IntPtr    m_handle;
@@ -152,6 +149,33 @@ namespace VncUiLibrary
             this.MouseDown  += mouseEvent;
             this.MouseUp    += mouseEvent;
             this.MouseMove  += mouseEvent;
+        }
+
+        /// <summary> 
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+
+                // If it is m_client?.Dispose(), it will be a CA2213 warning.
+                if (m_client != null)
+                {
+                    m_client.Dispose();
+                }
+                if (m_image != null)
+                {
+                    m_image.Dispose();
+                }
+                if (m_cancelTokenSource != null)
+                {
+                    m_cancelTokenSource.Dispose();
+                }
+            }
+            base.Dispose(disposing);
         }
 
         protected override void WndProc(ref Message a_msg)
@@ -331,12 +355,12 @@ namespace VncUiLibrary
 
                             // Execute to draw this control black.
                             // Without this, the screen will not be updated and the VNC image will remain.
-                            InvalidateRect(m_handle, (IntPtr)0, false);
+                            NativeMethods.InvalidateRect(m_handle, (IntPtr)0, false);
                             return;
                         }
                         if (body.MessageType == VncEnum.MessageTypeServerToClient.FramebufferUpdate)
                         {
-                            InvalidateRect(m_handle, (IntPtr)0, false);
+                            NativeMethods.InvalidateRect(m_handle, (IntPtr)0, false);
                             lock (m_client.CanvasLock)
                             {
                                 m_encodeList.Add(body.EncodeList);
@@ -370,7 +394,7 @@ namespace VncUiLibrary
 
             // Execute to draw this control black.
             // Without this, the screen will not be updated and the VNC image will remain.
-            InvalidateRect(m_handle, (IntPtr)0, false);
+            NativeMethods.InvalidateRect(m_handle, (IntPtr)0, false);
         }
 
         private void mouseEvent(object sender, MouseEventArgs e)
