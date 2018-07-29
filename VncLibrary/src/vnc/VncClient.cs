@@ -393,7 +393,7 @@ namespace VncLibrary
                     retBody = new VncReadMessageBody(messageType, null, colorMap);
                 }
 
-                onRead(new VncReadEventArgs(messageType, retBody));
+                onRead(new VncReadEventArgs(readBody, retBody));
                 return retBody;
             }
             catch (Exception a_ex)
