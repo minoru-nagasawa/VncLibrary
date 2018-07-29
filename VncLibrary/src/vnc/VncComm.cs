@@ -197,6 +197,33 @@ namespace VncLibrary
             a_stream.Write(buffer, 0, buffer.Length);
         }
 
+        public static void WriteSetPixelFormat(Stream a_stream, PixelFormat a_pixelFormat)
+        {
+            byte[] buffer = new byte[20];
+            buffer[ 0] = (byte)VncEnum.MessageTypeClientToServer.SetPixelFormat; // 0
+            buffer[ 1] = 0; // padding
+            buffer[ 2] = 0; // padding
+            buffer[ 3] = 0; // padding
+            buffer[ 4] = (byte) (a_pixelFormat.BytesPerPixel * 8);
+            buffer[ 5] = (byte) (a_pixelFormat.Depth);
+            buffer[ 6] = (byte) (a_pixelFormat.BigEndianFlag ? 1 : 0);
+            buffer[ 7] = (byte) (a_pixelFormat.TrueColorFlag ? 1 : 0);
+            buffer[ 8] = (byte) (a_pixelFormat.RedMax >> 8);
+            buffer[ 9] = (byte) (a_pixelFormat.RedMax & 0xFF);
+            buffer[10] = (byte) (a_pixelFormat.GreenMax >> 8);
+            buffer[11] = (byte) (a_pixelFormat.GreenMax & 0xFF);
+            buffer[12] = (byte) (a_pixelFormat.BlueMax >> 8);
+            buffer[13] = (byte) (a_pixelFormat.BlueMax & 0xFF);
+            buffer[14] = (byte) (a_pixelFormat.RedShift);
+            buffer[15] = (byte) (a_pixelFormat.GreenShift);
+            buffer[16] = (byte) (a_pixelFormat.BlueShift);
+            buffer[17] = 0; // padding
+            buffer[18] = 0; // padding
+            buffer[19] = 0; // padding
+
+            a_stream.Write(buffer, 0, buffer.Length);
+        }
+
         public static void WriteSetEncodings(Stream a_stream, VncEnum.EncodeType[] a_encodings)
         {
             byte[] buffer = new byte[4 + 4 * a_encodings.Length];

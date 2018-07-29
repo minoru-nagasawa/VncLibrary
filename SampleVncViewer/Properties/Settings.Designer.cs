@@ -49,13 +49,144 @@ namespace SampleVncViewer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Use33 {
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SendPointer {
             get {
-                return ((bool)(this["Use33"]));
+                return ((bool)(this["SendPointer"]));
             }
             set {
-                this["Use33"] = value;
+                this["SendPointer"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SendKeyboard {
+            get {
+                return ((bool)(this["SendKeyboard"]));
+            }
+            set {
+                this["SendKeyboard"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ColourLevelReceived {
+            get {
+                return ((bool)(this["ColourLevelReceived"]));
+            }
+            set {
+                this["ColourLevelReceived"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ColourLevelDepth24 {
+            get {
+                return ((bool)(this["ColourLevelDepth24"]));
+            }
+            set {
+                this["ColourLevelDepth24"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ColourLevelDepth16 {
+            get {
+                return ((bool)(this["ColourLevelDepth16"]));
+            }
+            set {
+                this["ColourLevelDepth16"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ColourLevelDepth8Colour64 {
+            get {
+                return ((bool)(this["ColourLevelDepth8Colour64"]));
+            }
+            set {
+                this["ColourLevelDepth8Colour64"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ColourLevelDepth8Colour8 {
+            get {
+                return ((bool)(this["ColourLevelDepth8Colour8"]));
+            }
+            set {
+                this["ColourLevelDepth8Colour8"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ProtocolReceived {
+            get {
+                return ((bool)(this["ProtocolReceived"]));
+            }
+            set {
+                this["ProtocolReceived"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Protocol33 {
+            get {
+                return ((bool)(this["Protocol33"]));
+            }
+            set {
+                this["Protocol33"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Protocol37 {
+            get {
+                return ((bool)(this["Protocol37"]));
+            }
+            set {
+                this["Protocol37"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Protocol38 {
+            get {
+                return ((bool)(this["Protocol38"]));
+            }
+            set {
+                this["Protocol38"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection EncodingList {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["EncodingList"]));
+            }
+            set {
+                this["EncodingList"] = value;
             }
         }
     }

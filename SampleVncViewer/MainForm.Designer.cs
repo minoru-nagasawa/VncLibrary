@@ -33,10 +33,10 @@
             this.c_addressTextBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.c_passwordTextBox = new System.Windows.Forms.TextBox();
-            this.c_vnc33CheckBox = new System.Windows.Forms.CheckBox();
             this.c_connectButton = new System.Windows.Forms.Button();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.c_vncControl = new VncUiLibrary.VncControl();
+            this.c_buttonSettings = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -72,19 +72,10 @@
             this.c_passwordTextBox.Size = new System.Drawing.Size(100, 19);
             this.c_passwordTextBox.TabIndex = 3;
             // 
-            // c_vnc33CheckBox
-            // 
-            this.c_vnc33CheckBox.AutoSize = true;
-            this.c_vnc33CheckBox.Location = new System.Drawing.Point(337, 8);
-            this.c_vnc33CheckBox.Name = "c_vnc33CheckBox";
-            this.c_vnc33CheckBox.Size = new System.Drawing.Size(58, 16);
-            this.c_vnc33CheckBox.TabIndex = 4;
-            this.c_vnc33CheckBox.Text = "Use3.3";
-            this.c_vnc33CheckBox.UseVisualStyleBackColor = true;
-            // 
             // c_connectButton
             // 
-            this.c_connectButton.Location = new System.Drawing.Point(401, 4);
+            this.c_connectButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.c_connectButton.Location = new System.Drawing.Point(437, 4);
             this.c_connectButton.Name = "c_connectButton";
             this.c_connectButton.Size = new System.Drawing.Size(75, 23);
             this.c_connectButton.TabIndex = 5;
@@ -104,23 +95,32 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.c_vncControl.Location = new System.Drawing.Point(12, 31);
             this.c_vncControl.Name = "c_vncControl";
-            this.c_vncControl.Size = new System.Drawing.Size(464, 350);
+            this.c_vncControl.Size = new System.Drawing.Size(500, 387);
             this.c_vncControl.TabIndex = 7;
             // 
-            // Form1
+            // c_buttonSettings
+            // 
+            this.c_buttonSettings.Location = new System.Drawing.Point(337, 4);
+            this.c_buttonSettings.Name = "c_buttonSettings";
+            this.c_buttonSettings.Size = new System.Drawing.Size(75, 23);
+            this.c_buttonSettings.TabIndex = 8;
+            this.c_buttonSettings.Text = "Settings";
+            this.c_buttonSettings.UseVisualStyleBackColor = true;
+            this.c_buttonSettings.Click += new System.EventHandler(this.c_buttonSettings_Click);
+            // 
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(488, 393);
+            this.ClientSize = new System.Drawing.Size(524, 430);
+            this.Controls.Add(this.c_buttonSettings);
             this.Controls.Add(this.c_vncControl);
             this.Controls.Add(this.c_connectButton);
-            this.Controls.Add(this.c_vnc33CheckBox);
             this.Controls.Add(this.c_passwordTextBox);
             this.Controls.Add(this.c_addressTextBox);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Name = "Form1";
-            this.Text = "Form1";
+            this.Name = "MainForm";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -133,10 +133,10 @@
         private System.Windows.Forms.TextBox c_addressTextBox;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox c_passwordTextBox;
-        private System.Windows.Forms.CheckBox c_vnc33CheckBox;
         private System.Windows.Forms.Button c_connectButton;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private VncUiLibrary.VncControl c_vncControl;
+        private System.Windows.Forms.Button c_buttonSettings;
     }
 }
 

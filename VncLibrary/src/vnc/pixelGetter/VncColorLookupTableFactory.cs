@@ -8,8 +8,6 @@ namespace VncLibrary
 {
     static public class VncColorLookupTableFactory
     {
-        static private ConcurrentDictionary<Tuple<int, bool>, Vec3b[]> s_colorMap = new ConcurrentDictionary<Tuple<int, bool>, Vec3b[]>();
-
         static public Vec3b[] GetColorLookupTable(PixelFormat a_pixelFormat)
         {
             if (a_pixelFormat.BytesPerPixel != 1
@@ -23,12 +21,6 @@ namespace VncLibrary
             }
 
             Vec3b[] colorMap;
-            var key = new Tuple<int, bool>(a_pixelFormat.BytesPerPixel, a_pixelFormat.BigEndianFlag);
-            if (s_colorMap.TryGetValue(key, out colorMap))
-            {
-                return colorMap;
-            }
-
             if (a_pixelFormat.BytesPerPixel == 1)
             {
                 int size = 0xFF;
@@ -41,7 +33,6 @@ namespace VncLibrary
                     colorMap[i] = new Vec3b((byte)b, (byte)g, (byte)r);
                 }
 
-                s_colorMap.TryAdd(key, colorMap);
                 return colorMap;
             }
             else if (a_pixelFormat.BytesPerPixel == 2)
@@ -79,7 +70,6 @@ namespace VncLibrary
                     }
                 }
 
-                s_colorMap.TryAdd(key, colorMap);
                 return colorMap;
             }
 

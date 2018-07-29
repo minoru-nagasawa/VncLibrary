@@ -6,6 +6,10 @@ namespace VncLibrary
 {
     public class PixelFormat
     {
+        static public readonly PixelFormat PixelFormatDepth24 = new PixelFormat(4, 24, false, true, 255, 255, 255, 16, 8, 0);
+        static public readonly PixelFormat PixelFormatDepth16 = new PixelFormat(2, 24, false, true,  31,  63,  31, 11, 5, 0);
+        static public readonly PixelFormat PixelFormatDepth8Colour64 = new PixelFormat(1, 8, false, true, 3, 3, 3, 4, 2, 0);
+        static public readonly PixelFormat PixelFormatDepth8Colour8  = new PixelFormat(1, 8, false, true, 1, 1, 1, 2, 1, 0);
         public byte BytesPerPixel
         {
             get;

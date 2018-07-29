@@ -37,6 +37,14 @@ namespace VncLibrary
         }
         #endregion
 
+        public static readonly VncEnum.EncodeType[] DefaultEncodeTypes = new VncEnum.EncodeType[] {
+                                                                            VncEnum.EncodeType.CopyRect,
+                                                                            VncEnum.EncodeType.ZRLE,
+                                                                            VncEnum.EncodeType.Hextile,
+                                                                            VncEnum.EncodeType.RRE,
+                                                                            VncEnum.EncodeType.Raw,
+                                                                         };
+
         public bool Connecting
         {
             get;
@@ -266,14 +274,27 @@ namespace VncLibrary
                 // InitialSettings
                 //-----------------------
                 // Server <- (SetEncodings) <- Client
-                var encodings = new VncEnum.EncodeType[] {
-                                                            VncEnum.EncodeType.CopyRect,
-                                                            VncEnum.EncodeType.ZRLE,
-                                                            VncEnum.EncodeType.Hextile,
-                                                            VncEnum.EncodeType.RRE,
-                                                            VncEnum.EncodeType.Raw,
-                                                         };
-                VncComm.WriteSetEncodings(m_writeStream, encodings);
+                VncComm.WriteSetEncodings(m_writeStream, ClientConfig.Encodings);
+
+                // Server <- (SetPixelFormat) <- Client
+                if (ClientConfig.IsColourSpecified)
+                {
+                    var pixelFormat = new PixelFormat(ClientConfig.SpecifiedColour.BytesPerPixel,
+                                                      ClientConfig.SpecifiedColour.Depth,
+                                                      m_serverInitBody.ServerPixelFormat.BigEndianFlag,
+                                                      ClientConfig.SpecifiedColour.TrueColorFlag,
+                                                      ClientConfig.SpecifiedColour.RedMax,
+                                                      ClientConfig.SpecifiedColour.GreenMax,
+                                                      ClientConfig.SpecifiedColour.BlueMax,
+                                                      ClientConfig.SpecifiedColour.RedShift,
+                                                      ClientConfig.SpecifiedColour.GreenShift,
+                                                      ClientConfig.SpecifiedColour.BlueShift);
+                    m_serverInitBody = new VncServerInitBody(m_serverInitBody.FramebufferWidth,
+                                                             m_serverInitBody.FramebufferHeight,
+                                                             pixelFormat,
+                                                             m_serverInitBody.NameString);
+                    VncComm.WriteSetPixelFormat(m_writeStream, m_serverInitBody.ServerPixelFormat);
+                }
 
                 //-----------------------
                 // Refresh Framebuffer
@@ -389,6 +410,11 @@ namespace VncLibrary
 
         public void WriteKeyEvent(VncEnum.KeyEventDownFlag a_downFlag, UInt32 a_key)
         {
+            if (!ClientConfig.IsSendKeyboard)
+            {
+                return;
+            }
+
             try
             {
                 VncComm.WriteKeyEvent(m_writeStream, a_downFlag, a_key);
@@ -402,6 +428,11 @@ namespace VncLibrary
 
         public void WritePointerEvent(VncEnum.PointerEventButtonMask a_buttonMask, UInt16 a_x, UInt16 a_y)
         {
+            if (!ClientConfig.IsSendPointer)
+            {
+                return;
+            }
+
             try
             {
                 VncComm.WritePointerEvent(m_writeStream, a_buttonMask, a_x, a_y);
