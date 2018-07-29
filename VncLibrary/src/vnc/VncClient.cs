@@ -99,6 +99,18 @@ namespace VncLibrary
             private set;
         }
 
+        public int Available
+        {
+            get
+            {
+                if (m_tcpClient == null)
+                {
+                    return 0;
+                }
+                return m_tcpClient.Available;
+            }
+        }
+
         public event VncSimpleEventHandler ConnectedEvent;
         protected void onConnected()
         {
